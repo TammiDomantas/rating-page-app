@@ -2,17 +2,14 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    // raw body for debug
+    // raw payload for testing
     const rawBody = await req.text();
-
+  
     console.log("RAW WEBHOOK BODY:");
     console.log(rawBody);
-
-    // convert to json
+    
+    // turn into json
     const body = JSON.parse(rawBody);
-
-    console.log("PARSED BODY:");
-    console.log(body);
 
     const event = body.event;
     const ticket = body.ticket;
@@ -20,7 +17,21 @@ export async function POST(req: Request) {
     const ticketId = ticket?.id;
     const status = ticket?.status;
     const requester = ticket?.requester;
-    const technician = ticket?.technician;
+
+    // get technician from team
+    let team = ticket?.team;
+
+    if (typeof team === "string" && team.length > 0) {
+      try {
+        team = JSON.parse(team);
+      } catch {
+        team = null;
+      }
+    }
+
+    const technician = Array.isArray(team)
+      ? team.find((member: any) => member.role === "assigned")
+      : null;
 
     console.log("EXTRACTED FIELDS:");
     console.log({
