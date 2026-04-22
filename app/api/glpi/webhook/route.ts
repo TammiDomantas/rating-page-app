@@ -2,18 +2,43 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const text = await req.text();
+    const body = await req.json();
 
-    console.log("GLPI webhook raw body:");
-    console.log(text);
+    const { event, ticketId, status, requester, team } = body;
 
-    console.log("Headers:");
-    console.log(Object.fromEntries(req.headers.entries()));
+    const technician = Array.isArray(team)
+      ? team.find((member: any) => member.role === "assigned")
+      : null;
 
-    return NextResponse.json({ ok: true });
+    console.log("GLPI webhook parsed:");
+    console.log({
+      event,
+      ticketId,
+      status,
+      requester,
+      technician,
+    });
+
+    if (status !== "Solved") {
+      return NextResponse.json({
+        ok: true,
+        message: "Ignored because ticket is not solved",
+      });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      ticketId,
+      status,
+      requester,
+      technician,
+    });
   } catch (err) {
     console.error("Webhook error:", err);
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json(
+      { ok: false, error: "Invalid request" },
+      { status: 400 }
+    );
   }
 }
