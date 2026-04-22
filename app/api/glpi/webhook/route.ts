@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+const recentTickets = new Map<string, number>(); // temporarilly store recently processed ticket IDs
+
 export async function POST(req: Request) {
   try {
     // get and output raw body (for testing)
@@ -19,6 +21,25 @@ export async function POST(req: Request) {
     const requester = ticket?.requester;
     const technician = ticket?.technician;
 
+    // prevent proccesing duplicates
+
+    if (ticketId) {
+      const now = Date.now();
+      const lastSeen = recentTickets.get(ticketId);
+      // if same ticket triggered webhook within last 30 seconds → ignore it
+      if (lastSeen && now - lastSeen < 30_000) {
+        console.log(`Duplicate webhook ignored for ticket ${ticketId}`);
+
+        return NextResponse.json({
+          ok: true,
+          ignored: true,
+        });
+      }
+
+      // remember this ticket as recently processed
+      recentTickets.set(ticketId, now);
+    }
+
     // log
     console.log("EXTRACTED FIELDS:");
     console.log({
@@ -28,7 +49,7 @@ export async function POST(req: Request) {
       requester,
       technician,
     });
-    
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("Webhook error:", err);
