@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 
 const recentTickets = new Map<string, number>(); // temporarilly store recently processed ticket IDs
 
@@ -21,7 +22,7 @@ export async function POST(req: Request) {
     const requester = ticket?.requester;
     const technician = ticket?.technician;
 
-    // prevent proccesing duplicates
+    // prevent proccesing duplicates 
 
     if (ticketId) {
       const now = Date.now();
@@ -49,6 +50,20 @@ export async function POST(req: Request) {
       requester,
       technician,
     });
+
+
+    // generate token from ticket id + technician id + secret key
+    const token = crypto
+      .createHash("sha256")
+      .update(`${ticketId}:${technician?.id}:${process.env.RATING_SECRET}`)
+      .digest("hex")
+      .slice(0, 16);
+
+    // generate link using the token
+    const ratingLink = `${process.env.APP_URL}/rate/${token}`;
+
+    // log the link
+    console.log("Rating link:", ratingLink);
 
     return NextResponse.json({ ok: true });
   } catch (err) {
