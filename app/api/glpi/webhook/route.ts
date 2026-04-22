@@ -51,16 +51,8 @@ export async function POST(req: Request) {
       technician,
     });
 
-
-    // generate token from ticket id + technician id + secret key
-    const token = crypto
-      .createHash("sha256")
-      .update(`${ticketId}:${technician?.id}:${process.env.RATING_SECRET}`)
-      .digest("hex")
-      .slice(0, 16);
-
-    // generate link using the token
-    const ratingLink = `${process.env.APP_URL}/rate/${token}`;
+    // generate link
+    const ratingLink = `${process.env.APP_URL}/rate/${ticketId}`;
 
     // log the link
     console.log("Rating link:", ratingLink);
