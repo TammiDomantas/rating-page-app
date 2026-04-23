@@ -1,35 +1,44 @@
 import { NextResponse } from "next/server";
-import { getTicketContext } from "@/lib/ticketContextStore";
-
+import { supabase } from "@/lib/supabase";
 
 export async function GET(
   req: Request,
-
   { params }: { params: Promise<{ ticketId: string }> }
 ) {
-
-  // get ticketId from url
   const { ticketId } = await params;
 
+  const { data, error } = await supabase
+    .from("ticket_context")
+    .select("*")
+    .eq("ticket_id", ticketId)
+    .single();
 
-  // Look up stored ticket context in memory
-  const context = getTicketContext(ticketId);
-
-
-  // error if context not found
-  if (!context) {
+  if (error || !data) {
     return NextResponse.json(
-      {
-        ok: false,
-        error: "Ticket context not found",
-      },
+      { ok: false, error: "Ticket context not found" },
       { status: 404 }
     );
   }
 
-  // if context exists, return it
   return NextResponse.json({
     ok: true,
-    context,
+    context: {
+      ticketId: data.ticket_id,
+      status: data.status,
+      requester: data.requester_id || data.requester_name
+        ? {
+            id: data.requester_id ?? "",
+            name: data.requester_name ?? "",
+          }
+        : null,
+      technician: data.technician_id || data.technician_name
+        ? {
+            id: data.technician_id ?? "",
+            name: data.technician_name ?? "",
+          }
+        : null,
+      ratingAllowed: data.rating_allowed,
+      createdAt: data.created_at,
+    },
   });
 }

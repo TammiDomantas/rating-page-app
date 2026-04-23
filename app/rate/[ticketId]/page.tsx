@@ -15,7 +15,7 @@ type TicketContext = {
     name: string;
   } | null;
   ratingAllowed: boolean;
-  createdAt: number;
+  createdAt: string;
 };
 
 

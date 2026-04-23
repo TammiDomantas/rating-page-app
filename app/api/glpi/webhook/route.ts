@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { saveTicketContext } from "@/lib/ticketContextStore";
+import { supabase } from "@/lib/supabase";
 
 const recentTickets = new Map<string, number>(); // temporarilly store recently processed ticket IDs
 
@@ -43,26 +43,31 @@ export async function POST(req: Request) {
     }
 
 
-    // save ticket context
+    // save ticket context to Supabase
     if (ticketId) {
-      saveTicketContext({
-        ticketId: String(ticketId),
-        status: String(status ?? ""),
-        requester: requester
-          ? {
-              id: String(requester.id ?? ""),
-              name: String(requester.name ?? ""),
-            }
-          : null,
-        technician: technician
-          ? {
-              id: String(technician.id ?? ""),
-              name: String(technician.name ?? ""),
-            }
-          : null,
-        ratingAllowed: status === "Solved",
-        createdAt: Date.now(),
-      });
+      const { error } = await supabase.from("ticket_context").upsert(
+        {
+          ticket_id: String(ticketId),
+          status: String(status ?? ""),
+          requester_id: requester?.id ? String(requester.id) : null,
+          requester_name: requester?.name ? String(requester.name) : null,
+          technician_id: technician?.id ? String(technician.id) : null,
+          technician_name: technician?.name ? String(technician.name) : null,
+          rating_allowed: status === "Solved",
+        },
+        {
+          onConflict: "ticket_id",
+        }
+      );
+
+      if (error) {
+        console.error("Supabase save error:", error);
+
+        return NextResponse.json(
+          { ok: false, error: "Failed to save ticket context" },
+          { status: 500 }
+        );
+      }
     }
 
     // log
