@@ -39,8 +39,26 @@ export async function POST(req: Request) {
       );
     }
 
+    const { data: contextData, error: contextError } = await supabase
+      .from("ticket_context")
+      .select("technician_id, technician_name")
+      .eq("ticket_id", String(ticketId))
+      .single();
+
+    if (contextError || !contextData) {
+      console.error("Supabase ticket_context lookup error:", contextError);
+      return NextResponse.json(
+        { ok: false, error: "Ticket context not found" },
+        { status: 404 }
+      );
+    }
+
+
+
     const { error } = await supabase.from("ratings").insert({
       ticket_id: String(ticketId),
+      technician_id: contextData.technician_id,
+      technician_name: contextData.technician_name,
       rating: Number(rating),
       comment: comment ? String(comment) : null,
     });
