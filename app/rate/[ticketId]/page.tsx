@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 type TicketContext = {
   ticketId: string;
@@ -18,33 +18,30 @@ type TicketContext = {
   createdAt: string;
 };
 
-
-export default function RatingPage({
-  params,
-}: {
-  // ticketId comes from the URL
-  params: { ticketId: string };
-}) {
-
-  // stores selected star rating (1–5)
+export default function RatingPage() {
+  const params = useParams();
+  const ticketId = params.ticketId as string;
   const [rating, setRating] = useState(0);
-  // stores optional comment text
   const [comment, setComment] = useState("");
-  // stores ticket context received from backend
   const [context, setContext] = useState<TicketContext | null>(null);
-  // controls loading state while fetching ticket context
   const [loadingContext, setLoadingContext] = useState(true);
-  // stores error message if context cannot be loaded
   const [contextError, setContextError] = useState("");
-  // router used for redirecting
   const router = useRouter();
 
   // Load ticket context
   useEffect(() => {
     async function loadContext() {
       try {
+        
+        // check that there is no missing ticketId
+        if (!ticketId) {
+          setContextError("Šios užklausos įvertinti negalima.");
+          setLoadingContext(false);
+          return;
+        }
+
         // get ticket context from backend
-        const res = await fetch(`/api/ticket/${params.ticketId}`);
+        const res = await fetch(`/api/ticket/${ticketId}`);
         const data = await res.json();
         // if Error
         if (!res.ok) {
@@ -65,7 +62,7 @@ export default function RatingPage({
 
     loadContext();
 
-  }, [params.ticketId]);
+  }, [ticketId]);
 
 
   // send rating to backend
@@ -77,7 +74,7 @@ export default function RatingPage({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        ticketId: params.ticketId,
+        ticketId,
         rating,
         comment,
       }),
