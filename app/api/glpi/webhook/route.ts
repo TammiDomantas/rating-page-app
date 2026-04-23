@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { saveTicketContext } from "@/lib/ticketContextStore";
 
 const recentTickets = new Map<string, number>(); // temporarilly store recently processed ticket IDs
 
@@ -39,6 +40,29 @@ export async function POST(req: Request) {
 
       // remember this ticket as recently processed
       recentTickets.set(ticketId, now);
+    }
+
+
+    // save ticket context
+    if (ticketId) {
+      saveTicketContext({
+        ticketId: String(ticketId),
+        status: String(status ?? ""),
+        requester: requester
+          ? {
+              id: String(requester.id ?? ""),
+              name: String(requester.name ?? ""),
+            }
+          : null,
+        technician: technician
+          ? {
+              id: String(technician.id ?? ""),
+              name: String(technician.name ?? ""),
+            }
+          : null,
+        ratingAllowed: status === "Solved",
+        createdAt: Date.now(),
+      });
     }
 
     // log
