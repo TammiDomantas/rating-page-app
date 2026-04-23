@@ -86,12 +86,7 @@ export default function RatingPage() {
   }
 
   router.push("/thank-you");
-}
-
-    // Redirect user to thank-you page after submission
-    router.push("/thank-you");
   }
-
 
   // while still loading
   if (loadingContext) {
