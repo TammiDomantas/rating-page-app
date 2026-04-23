@@ -16,6 +16,7 @@ type TicketContext = {
   } | null;
   ratingAllowed: boolean;
   createdAt: string;
+  alreadyRated: boolean;
 };
 
 export default function RatingPage() {
@@ -130,6 +131,22 @@ export default function RatingPage() {
     );
   }
 
+  // if ticket was already rated
+  if (context.alreadyRated) {
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="bg-white p-8 rounded-2xl shadow w-full max-w-md text-center">
+        <h1 className="text-xl text-gray-700 font-bold mb-3">
+          Įvertinimas jau pateiktas
+        </h1>
+
+        <p className="text-gray-600">
+          Ši užklausa jau įvertinta.
+        </p>
+      </div>
+    </main>
+  );
+  }
 
   // main rating form UI
   return (
