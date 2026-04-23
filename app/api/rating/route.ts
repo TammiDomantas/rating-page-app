@@ -6,12 +6,23 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const ticketId = body.ticketId;
-    const rating = body.rating;
-    const comment = body.comment;
+    const rating = Number(body.rating);
+    const comment = // trim comment
+      typeof body.comment === "string"
+      ? body.comment.trim()
+      : "";
 
     if (!ticketId || !rating) {
       return NextResponse.json(
         { ok: false, error: "Missing ticketId or rating" },
+        { status: 400 }
+      );
+    }
+
+    // must have atleast 1 star
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json(
+        { ok: false, error: "Rating must be an integer between 1 and 5" },
         { status: 400 }
       );
     }
@@ -60,7 +71,7 @@ export async function POST(req: Request) {
       technician_id: contextData.technician_id,
       technician_name: contextData.technician_name,
       rating: Number(rating),
-      comment: comment ? String(comment) : null,
+      comment: comment ? comment : null,
     });
 
     if (error) {
