@@ -67,19 +67,26 @@ export default function RatingPage() {
 
   // send rating to backend
   async function submitRating() {
+  const res = await fetch("/api/rating", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ticketId,
+      rating,
+      comment,
+    }),
+  });
 
-    await fetch("/api/rating", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ticketId,
-        rating,
-        comment,
-      }),
-    });
+  if (!res.ok) {
+    const data = await res.json();
+    alert(data.error || "Nepavyko išsaugoti įvertinimo.");
+    return;
+  }
 
+  router.push("/thank-you");
+}
 
     // Redirect user to thank-you page after submission
     router.push("/thank-you");
