@@ -65,14 +65,34 @@ export async function POST(req: Request) {
     }
 
 
-
+    // save rating
     const { error } = await supabase.from("ratings").insert({
       ticket_id: String(ticketId),
       technician_id: contextData.technician_id,
       technician_name: contextData.technician_name,
-      rating: Number(rating),
+      rating,
       comment: comment ? comment : null,
     });
+
+    if (error) {
+      console.error("Supabase rating insert error:", error);
+
+      return NextResponse.json(
+        { ok: false, error: "Failed to save rating" },
+        { status: 500 }
+      );
+    }
+
+    // disable further rating attempts for this ticket
+    const { error: updateError } = await supabase
+      .from("ticket_context")
+      .update({ rating_allowed: false })
+      .eq("ticket_id", String(ticketId));
+
+    if (updateError) {
+      console.error("Supabase rating_allowed update error:", updateError);
+    }
+
 
     if (error) {
       console.error("Supabase rating insert error:", error);
