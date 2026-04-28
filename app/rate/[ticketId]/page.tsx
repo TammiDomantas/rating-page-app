@@ -22,6 +22,8 @@ type TicketContext = {
 export default function RatingPage() {
   const params = useParams();
   const ticketId = params.ticketId as string;
+  // normalize GLPI ticket id from URL
+  const normalizedTicketId = ticketId.replace(/^0+/, "") || "0";
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [context, setContext] = useState<TicketContext | null>(null);
@@ -42,7 +44,7 @@ export default function RatingPage() {
         }
 
         // get ticket context from backend
-        const res = await fetch(`/api/ticket/${ticketId}`);
+        const res = await fetch(`/api/ticket/${normalizedTicketId}`);
         const data = await res.json();
         // if Error
         if (!res.ok) {
@@ -63,7 +65,7 @@ export default function RatingPage() {
 
     loadContext();
 
-  }, [ticketId]);
+  }, [normalizedTicketId]);
 
 
   // send rating to backend
@@ -74,7 +76,7 @@ export default function RatingPage() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      ticketId,
+      ticketId: normalizedTicketId,
       rating,
       comment,
     }),
