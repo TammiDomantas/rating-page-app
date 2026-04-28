@@ -6,6 +6,8 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const ticketId = body.ticketId;
+    const normalizedTicketId = ticketId.replace(/^0+/,"");
+
     const rating = Number(body.rating);
     const comment = // trim comment
       typeof body.comment === "string"
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
     const { data: existingRating, error: existingError } = await supabase
       .from("ratings")
       .select("ticket_id")
-      .eq("ticket_id", String(ticketId))
+      .eq("ticket_id", normalizedTicketId))
       .maybeSingle();
 
     if (existingError) {
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
     const { data: contextData, error: contextError } = await supabase
       .from("ticket_context")
       .select("technician_id, technician_name")
-      .eq("ticket_id", String(ticketId))
+      .eq("ticket_id", normalizedTicketId))
       .single();
 
     if (contextError || !contextData) {
@@ -87,7 +89,7 @@ export async function POST(req: Request) {
     const { error: updateError } = await supabase
       .from("ticket_context")
       .update({ rating_allowed: false })
-      .eq("ticket_id", String(ticketId));
+      .eq("ticket_id", normalizedTicketId));
 
     if (updateError) {
       console.error("Supabase rating_allowed update error:", updateError);
