@@ -14,10 +14,10 @@ export default function HomePage() {
         </p>
 
         <Link
-          href="/rate/123"
+          href="/rating-summary"
           className="block bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
         >
-          Atidaryti reitinga
+          Atidaryti įvertinimų lentelę
         </Link>
 
       </div>
