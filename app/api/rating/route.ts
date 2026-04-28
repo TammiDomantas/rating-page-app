@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const { data: existingRating, error: existingError } = await supabase
       .from("ratings")
       .select("ticket_id")
-      .eq("ticket_id", normalizedTicketId))
+      .eq("ticket_id", normalizedTicketId));
       .maybeSingle();
 
     if (existingError) {
