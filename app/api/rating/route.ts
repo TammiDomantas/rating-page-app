@@ -89,7 +89,7 @@ export async function POST(req: Request) {
     const { error: updateError } = await supabase
       .from("ticket_context")
       .update({ rating_allowed: false })
-      .eq("ticket_id", normalizedTicketId));
+      .eq("ticket_id", normalizedTicketId);
 
     if (updateError) {
       console.error("Supabase rating_allowed update error:", updateError);
