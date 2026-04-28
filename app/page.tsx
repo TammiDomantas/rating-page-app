@@ -15,7 +15,7 @@ export default function HomePage() {
 
         <Link
           href="/create-ticket"
-          className="block bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
+          className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl hover:bg-blue-700 transition"
         >
           Sukurti užklausą
         </Link>
@@ -23,7 +23,7 @@ export default function HomePage() {
 
         <Link
           href="/rating-summary"
-          className="block bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
+          className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl hover:bg-blue-700 transition"
         >
           Atidaryti įvertinimų lentelę
         </Link>
