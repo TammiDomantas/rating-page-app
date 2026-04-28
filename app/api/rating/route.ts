@@ -5,8 +5,14 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const ticketId = body.ticketId;
-    const normalizedTicketId = ticketId.replace(/^0+/,"");
+    // make sure ticketId is string
+    const ticketId =
+      typeof body.ticketId === "string"
+        ? body.ticketId.trim()
+        : String(body.ticketId ?? "");
+
+    // remove leading 0s
+    const normalizedTicketId = ticketId.replace(/^0+/, "") || "0";
 
     const rating = Number(body.rating);
     const comment = // trim comment
@@ -93,16 +99,6 @@ export async function POST(req: Request) {
 
     if (updateError) {
       console.error("Supabase rating_allowed update error:", updateError);
-    }
-
-
-    if (error) {
-      console.error("Supabase rating insert error:", error);
-
-      return NextResponse.json(
-        { ok: false, error: "Failed to save rating" },
-        { status: 500 }
-      );
     }
 
     return NextResponse.json({ ok: true });
