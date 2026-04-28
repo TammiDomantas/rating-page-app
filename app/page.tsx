@@ -14,6 +14,14 @@ export default function HomePage() {
         </p>
 
         <Link
+          href="/create-ticket"
+          className="block bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
+        >
+          Sukurti užklausą
+        </Link>
+
+
+        <Link
           href="/rating-summary"
           className="block bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
         >
