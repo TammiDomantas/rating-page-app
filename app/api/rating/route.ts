@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     const { data: contextData, error: contextError } = await supabase
       .from("ticket_context")
       .select("technician_id, technician_name")
-      .eq("ticket_id", normalizedTicketId))
+      .eq("ticket_id", normalizedTicketId)
       .single();
 
     if (contextError || !contextData) {
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
     // save rating
     const { error } = await supabase.from("ratings").insert({
-      ticket_id: String(ticketId),
+      ticket_id: normalizedTicketId,
       technician_id: contextData.technician_id,
       technician_name: contextData.technician_name,
       rating,
