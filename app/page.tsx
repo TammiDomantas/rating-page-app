@@ -2,9 +2,8 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4 space-y-4">
-      <div className="bg-white p-8 rounded-2xl shadow w-full max-w-md text-center">
-
+    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="bg-white p-8 rounded-2xl shadow w-full max-w-md text-center space-y-4">
         <h1 className="text-2xl text-gray-800 font-bold mb-4">
           Įvertinimo sistema
         </h1>
