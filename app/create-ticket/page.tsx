@@ -34,7 +34,7 @@ export default function CreateTicketPage() {
     setLoading(false);
 
     if (!res.ok) {
-      alert(data.error || "Nepavyko sukurti užklausos.");
+      alert(JSON.stringify(data, null, 2));
       return;
     }
 
