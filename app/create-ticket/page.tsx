@@ -1,9 +1,54 @@
 "use client";
 import Link from "next/link";
+import { useState } from "react";
+
 export default function CreateTicketPage() {
+
+  const [loading, setLoading] = useState(false); // CHANGED: submit state
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+
+    const res = await fetch("/api/create-ticket", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: formData.get("title"),
+        description: formData.get("description"),
+        email: formData.get("email"),
+        name: formData.get("name"),
+        phone: formData.get("phone"),
+        department: formData.get("department"), 
+        category: formData.get("category"), 
+      }),
+    });
+
+    const data = await res.json();
+
+    setLoading(false);
+
+    if (!res.ok) {
+      alert(data.error || "Nepavyko sukurti užklausos.");
+      return;
+    }
+
+    alert("Užklausa sėkmingai sukurta.");
+
+    e.currentTarget.reset(); 
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <form className="bg-white p-6 rounded-xl shadow w-full max-w-md space-y-4">
+        <form 
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded-xl shadow w-full max-w-md space-y-4"
+        >
 
         <div>
           <label htmlFor="title" className="block mb-1 font-medium text-gray-600">
@@ -14,6 +59,7 @@ export default function CreateTicketPage() {
             type="text"
             id="title"
             name="title"
+            required
             className="w-full border rounded-lg p-2 text-gray-600"
           />
         </div>
@@ -39,6 +85,7 @@ export default function CreateTicketPage() {
             type="text"
             id="email"
             name="email"
+            required
             className="w-full border rounded-lg p-2 text-gray-600"
           />
         </div>  
@@ -52,6 +99,7 @@ export default function CreateTicketPage() {
             type="text"
             id="name"
             name="name"
+            required
             className="w-full border rounded-lg p-2 text-gray-600"
           />
         </div>
@@ -75,7 +123,11 @@ export default function CreateTicketPage() {
 
         <div>
   
-        <select className="w-full border rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600">
+        <select 
+          name="department"
+          required
+          className="w-full border rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+        >
             <option value="">Pasirinkite savo skyrių</option>
             {/* 
             <option value=""></option>
@@ -119,7 +171,11 @@ export default function CreateTicketPage() {
         </div>
 
         <div>
-        <select className="w-full border rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600">
+        <select
+        name="category"
+        required 
+        className="w-full border rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
+        >
             <option value="">Pasirinkite užklausos kategoriją</option>
             {/*
             <optgroup label=""> 
@@ -141,21 +197,12 @@ export default function CreateTicketPage() {
         </select>    
         </div>
 
-        <select className="w-full border rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600">
-            <option value="">Pasirinkite užklausos pirmenybė</option>
-            <option value="Pagrindinis">Pagrindinis</option>
-            <option value="Labai aukštas">Labai aukštas</option>
-            <option value="Aukštas">Aukštas</option>
-            <option value="Vidutinis">Vidutinis</option>
-            <option value="Žemas">Žemas</option>
-            <option value="Labai žemas">Labai žemas</option>
-        </select>    
-
         <button
             type="submit"
+            disabled={loading}// no double submit
             className="w-full flex items-center justify-center bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-medium"
             >
-            Pateikti užklausą
+            {loading ? "Siunčiama..." : "Pateikti užklausą"}
         </button>
         <Link
             href="/"
@@ -163,6 +210,7 @@ export default function CreateTicketPage() {
             >
               Gryžti atgal
         </Link>
+
       </form>
     </main>
 
