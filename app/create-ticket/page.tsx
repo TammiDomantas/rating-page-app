@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export default function CreateTicketPage() {
 
-  const [loading, setLoading] = useState(false); // CHANGED: submit state
+  const [loading, setLoading] = useState(false); 
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

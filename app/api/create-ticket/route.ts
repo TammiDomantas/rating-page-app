@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { departmentMap, categoryMap } from "@/lib/glpiMappings";
 
 const GLPI_URL = process.env.GLPI_URL!;
-const GLPI_API_TOKEN = process.env.GLPI_API_TOKEN!; 
+const GLPI_API_TOKEN = process.env.GLPI_API_TOKEN!;
 
 export async function POST(req: Request) {
   try {
@@ -22,16 +23,34 @@ export async function POST(req: Request) {
       );
     }
 
+    // map department and category names to GLPI ids
+    const departmentId = departmentMap[department];
+    const categoryId = categoryMap[category];
+
+    if (!departmentId || !categoryId) {
+      return NextResponse.json(
+        { ok: false, error: "Neteisingas skyrius arba kategorija." },
+        { status: 400 }
+      );
+    }
+
+    if (!GLPI_URL || !GLPI_API_TOKEN) {
+      return NextResponse.json(
+        { ok: false, error: "Missing GLPI configuration." },
+        { status: 500 }
+      );
+    }
+
     const ticketRes = await fetch(`${GLPI_URL}/Ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-
         Authorization: `glpi-api-token ${GLPI_API_TOKEN}`,
       },
       body: JSON.stringify({
         input: {
           name: title,
+
           content: `
 Aprašymas:
 ${description}
@@ -46,11 +65,14 @@ Telefonas:
 ${phone || "-"}
 
 Skyrius:
-${department}
+${department} (${departmentId})
 
 Kategorija:
-${category}
+${category} (${categoryId})
           `.trim(),
+
+          entities_id: departmentId,
+          itilcategories_id: categoryId,
         },
       }),
     });
@@ -64,7 +86,7 @@ ${category}
         {
           ok: false,
           error: "Nepavyko sukurti užklausos GLPI.",
-          details: ticketData, 
+          details: ticketData,
         },
         { status: 500 }
       );
