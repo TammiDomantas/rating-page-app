@@ -19,6 +19,7 @@ export default async function RatingsSummaryPage() {
     .order("technician_name", { ascending: true });
 
   if (error) {
+    console.error("Ratings summary Supabase error:", error);
     return (
       <main className="min-h-screen bg-gray-50 px-4 py-10">
         <div className="mx-auto max-w-4xl rounded-2xl bg-white p-6 shadow">
