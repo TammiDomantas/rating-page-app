@@ -34,15 +34,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const tokenRes = await fetch(`${GLPI_URL}/oauth/token`, {
+    const tokenRes = await fetch(`${process.env.GLPI_API_BASE}/token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        grant_type: "client_credentials",
-        client_id: GLPI_CLIENT_ID,
-        client_secret: GLPI_CLIENT_SECRET,
+        grant_type: "password",
+        client_id: process.env.GLPI_CLIENT_ID,
+        client_secret: process.env.GLPI_CLIENT_SECRET,
+        username: process.env.GLPI_USERNAME,
+        password: process.env.GLPI_PASSWORD,
+        scope: "api",
       }),
     });
 
