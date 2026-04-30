@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { departmentMap, categoryMap } from "@/lib/glpiMappings";
 
 const GLPI_URL = process.env.GLPI_URL!;
-const GLPI_API_TOKEN = process.env.GLPI_API_TOKEN!;
+const GLPI_CLIENT_ID = process.env.GLPI_CLIENT_ID!;
+const GLPI_CLIENT_SECRET = process.env.GLPI_CLIENT_SECRET!;
 
 export async function POST(req: Request) {
   try {
@@ -33,18 +34,36 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!GLPI_URL || !GLPI_API_TOKEN) {
+    const tokenRes = await fetch(`${GLPI_URL}/oauth/token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        grant_type: "client_credentials",
+        client_id: GLPI_CLIENT_ID,
+        client_secret: GLPI_CLIENT_SECRET,
+      }),
+    });
+
+    const tokenData = await tokenRes.json();
+
+    if (!tokenRes.ok) {
+      console.error("OAuth token error:", tokenData);
+
       return NextResponse.json(
-        { ok: false, error: "Trūksta GLPI konfigūracijos." },
+        { ok: false, error: "OAuth authentication failed" },
         { status: 500 }
       );
     }
+
+    const accessToken = tokenData.access_token;
 
     const ticketRes = await fetch(`${GLPI_URL}/Ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `glpi-api-token ${GLPI_API_TOKEN}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         input: {
@@ -74,14 +93,7 @@ ${category} (${categoryId})
       }),
     });
 
-    const responseText = await ticketRes.text();
-
-    let ticketData;
-    try {
-      ticketData = JSON.parse(responseText);
-    } catch {
-      ticketData = responseText;
-    }
+    const ticketData = await ticketRes.json();
 
     if (!ticketRes.ok) {
       console.error("GLPI ticket create error:", ticketData);
@@ -107,7 +119,6 @@ ${category} (${categoryId})
       {
         ok: false,
         error: "Serverio klaida.",
-        details: err instanceof Error ? err.message : String(err),
       },
       { status: 500 }
     );
