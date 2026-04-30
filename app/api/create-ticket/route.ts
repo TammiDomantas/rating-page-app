@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
     const accessToken = tokenData.access_token;
 
-    const ticketRes = await fetch(`${GLPI_URL}/Ticket`, {
+    const ticketRes = await fetch(`${GLPI_URL}/Assistance/Ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
