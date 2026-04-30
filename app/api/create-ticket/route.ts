@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase"; 
 import { departmentMap, categoryMap } from "@/lib/glpiMappings";
+
+const GLPI_URL = process.env.GLPI_URL!;
+const GLPI_API_TOKEN = process.env.GLPI_API_TOKEN!;
 
 export async function POST(req: Request) {
   try {
@@ -31,43 +33,82 @@ export async function POST(req: Request) {
       );
     }
 
-    // save request to Supabase instead of sending to GLPI for now
-    const { data, error } = await supabase
-      .from("pending_tickets")
-      .insert({
-        title,
-        description,
-        email,
-        requester_name: name,
-        phone: phone || null,
-        department,
-        category,
-        department_id: departmentId,
-        category_id: categoryId,
-        status: "pending", // waiting for GLPI sync later
-      })
-      .select("id")
-      .single();
+    if (!GLPI_URL || !GLPI_API_TOKEN) {
+      return NextResponse.json(
+        { ok: false, error: "Trūksta GLPI konfigūracijos." },
+        { status: 500 }
+      );
+    }
 
-    if (error) {
-      console.error("Supabase pending_tickets insert error:", error);
+    const ticketRes = await fetch(`${GLPI_URL}/Ticket`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `glpi-api-token ${GLPI_API_TOKEN}`,
+      },
+      body: JSON.stringify({
+        input: {
+          name: title,
+          content: `
+Aprašymas:
+${description}
+
+Vardas:
+${name}
+
+Email:
+${email}
+
+Telefonas:
+${phone || "-"}
+
+Skyrius:
+${department} (${departmentId})
+
+Kategorija:
+${category} (${categoryId})
+          `.trim(),
+          entities_id: departmentId,
+          itilcategories_id: categoryId,
+        },
+      }),
+    });
+
+    const responseText = await ticketRes.text();
+
+    let ticketData;
+    try {
+      ticketData = JSON.parse(responseText);
+    } catch {
+      ticketData = responseText;
+    }
+
+    if (!ticketRes.ok) {
+      console.error("GLPI ticket create error:", ticketData);
 
       return NextResponse.json(
-        { ok: false, error: "Nepavyko išsaugoti užklausos." },
+        {
+          ok: false,
+          error: "Nepavyko sukurti užklausos GLPI.",
+          details: ticketData,
+        },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       ok: true,
-      pendingTicketId: data.id,
-      status: "pending",
+      ticket: ticketData,
     });
   } catch (err) {
-    console.error("Create pending ticket error:", err);
+    console.error("Create ticket error:", err);
 
     return NextResponse.json(
-      { ok: false, error: "Serverio klaida." },
+      {
+        ok: false,
+        error: "Serverio klaida.",
+        details: err instanceof Error ? err.message : String(err),
+      },
       { status: 500 }
     );
   }
