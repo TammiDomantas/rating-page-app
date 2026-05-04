@@ -73,7 +73,6 @@ export async function POST(req: Request) {
       `${GLPI_URL}/Administration/User?searchText=${encodeURIComponent(email)}`,
       {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
       }
