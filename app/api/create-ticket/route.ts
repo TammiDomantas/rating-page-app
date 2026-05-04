@@ -68,32 +68,30 @@ export async function POST(req: Request) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({
-        input: {
-          name: title,
-          content: `
-Aprašymas:
-${description}
+    body: JSON.stringify({
+      name: title,
+      content: `
+    Aprašymas:
+    ${description}
 
-Vardas:
-${name}
+    Vardas:
+    ${name}
 
-Email:
-${email}
+    Email:
+    ${email}
 
-Telefonas:
-${phone || "-"}
+    Telefonas:
+    ${phone || "-"}
 
-Skyrius:
-${department} (${departmentId})
+    Skyrius:
+    ${department} (${departmentId})
 
-Kategorija:
-${category} (${categoryId})
-          `.trim(),
-          entities_id: departmentId,
-          itilcategories_id: categoryId,
-        },
-      }),
+    Kategorija:
+    ${category} (${categoryId})
+      `.trim(),
+      entities_id: departmentId,
+      itilcategories_id: categoryId,
+    }),
     });
 
     const ticketData = await ticketRes.json();
