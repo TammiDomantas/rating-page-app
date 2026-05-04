@@ -37,7 +37,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Get OAuth token
     const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
       method: "POST",
       headers: {
@@ -80,16 +79,24 @@ export async function POST(req: Request) {
 
     const userData = await userRes.json();
 
-    if (userRes.ok && Array.isArray(userData) && userData.length > 0) {
-      requesterId = userData[0].id;
+    console.log("GLPI user lookup result:", JSON.stringify(userData, null, 2));
+
+    // get requester via email
+    if (userRes.ok && Array.isArray(userData)) {
+      const matchedUser = userData.find((user) =>
+        Array.isArray(user.emails) &&
+        user.emails.some(
+          (entry: { email?: string }) =>
+            entry.email?.toLowerCase() === email.toLowerCase()
+        )
+      );
+
+      requesterId = matchedUser?.id ?? null;
     }
 
-    // log result for user lookup
-    console.log("GLPI user lookup result:", userData);
     console.log("Requester ID:", requesterId);
 
-
-    // Create ticket first, without category/entity/team for now
+    // Create ticket first
     const ticketRes = await fetch(`${GLPI_URL}/Assistance/Ticket`, {
       method: "POST",
       headers: {
@@ -99,14 +106,14 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         name: title,
         content: `
-      ${description}
+        ${description}
 
-      ---
-      Vardas: ${name}
-      Email: ${email}
-      Telefonas: ${phone || "-"}
-      Skyrius: ${department} (${departmentId})
-      Kategorija: ${category} (${categoryId})
+        ---
+        Vardas: ${name}
+        Email: ${email}
+        Telefonas: ${phone || "-"}
+        Skyrius: ${department} (${departmentId})
+        Kategorija: ${category} (${categoryId})
         `.trim(),
       }),
     });
@@ -126,9 +133,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // add requester after ticket creation
+    console.log("Created ticket data:", ticketData);
+
     const createdTicketId = ticketData.id;
 
+    // Add requester after ticket creation
     if (requesterId && createdTicketId) {
       const requesterRes = await fetch(
         `${GLPI_URL}/Assistance/Ticket/${createdTicketId}/TeamMember`,
@@ -145,10 +154,13 @@ export async function POST(req: Request) {
         }
       );
 
-      const requesterData = await requesterRes.json();
+      const requesterText = await requesterRes.text();
+
+      console.log("Requester attach status:", requesterRes.status);
+      console.log("Requester attach result:", requesterText);
 
       if (!requesterRes.ok) {
-        console.error("GLPI requester attach error:", requesterData);
+        console.error("GLPI requester attach error:", requesterText);
       }
     }
 
