@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { departmentMap, categoryMap } from "@/lib/glpiMappings";
 
 const GLPI_URL = process.env.GLPI_URL!;
+const GLPI_API_BASE = process.env.GLPI_API_BASE!;
 const GLPI_CLIENT_ID = process.env.GLPI_CLIENT_ID!;
 const GLPI_CLIENT_SECRET = process.env.GLPI_CLIENT_SECRET!;
+const GLPI_USERNAME = process.env.GLPI_USERNAME!;
+const GLPI_PASSWORD = process.env.GLPI_PASSWORD!;
 
 export async function POST(req: Request) {
   try {
@@ -34,17 +37,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const tokenRes = await fetch(`${process.env.GLPI_API_BASE}/token`, {
+    // =========================
+    // GET OAuth token
+    // =========================
+    const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         grant_type: "password",
-        client_id: process.env.GLPI_CLIENT_ID,
-        client_secret: process.env.GLPI_CLIENT_SECRET,
-        username: process.env.GLPI_USERNAME,
-        password: process.env.GLPI_PASSWORD,
+        client_id: GLPI_CLIENT_ID,
+        client_secret: GLPI_CLIENT_SECRET,
+        username: GLPI_USERNAME,
+        password: GLPI_PASSWORD,
         scope: "api",
       }),
     });
@@ -62,9 +68,9 @@ export async function POST(req: Request) {
 
     const accessToken = tokenData.access_token;
 
-
-    // get glpi user by email
+    // find glpi user by email
     let requesterId: number | null = null;
+
     const userRes = await fetch(
       `${GLPI_URL}/Administration/User?searchText=${encodeURIComponent(email)}`,
       {
@@ -81,21 +87,30 @@ export async function POST(req: Request) {
       requesterId = userData[0].id;
     }
 
+    // create ticket
     const ticketRes = await fetch(`${GLPI_URL}/Assistance/Ticket`, {
+      method: "POST", 
+      headers: {
+        "Content-Type": "application/json", 
+        Authorization: `Bearer ${accessToken}`, 
+      },
       body: JSON.stringify({
         name: title,
+
         content: `
-      ${description}
+        ${description}
 
-      ---
-      Vardas: ${name}
-      Email: ${email}
-      Telefonas: ${phone || "-"}
-      `.trim(),
+        ---
+        Vardas: ${name}
+        Email: ${email}
+        Telefonas: ${phone || "-"}
+        `.trim(),
 
+        
         entity: departmentId,
         category: categoryId,
 
+        // attach requester if found
         ...(requesterId && {
           team: [
             {
