@@ -37,9 +37,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // =========================
-    // GET OAuth token
-    // =========================
+    // Get OAuth token
     const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
       method: "POST",
       headers: {
@@ -68,7 +66,7 @@ export async function POST(req: Request) {
 
     const accessToken = tokenData.access_token;
 
-    // find glpi user by email
+    // Find GLPI user by submitted email
     let requesterId: number | null = null;
 
     const userRes = await fetch(
@@ -87,7 +85,7 @@ export async function POST(req: Request) {
       requesterId = userData[0].id;
     }
 
-    // create ticket
+    // Create ticket first, without category/entity/team for now
     const ticketRes = await fetch(`${GLPI_URL}/Assistance/Ticket`, {
       method: "POST",
       headers: {
@@ -97,15 +95,15 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         name: title,
         content: `
-    ${description}
+      ${description}
 
-    ---
-    Vardas: ${name}
-    Email: ${email}
-    Telefonas: ${phone || "-"}
-    Skyrius: ${department} (${departmentId})
-    Kategorija: ${category} (${categoryId})
-    `.trim(),
+      ---
+      Vardas: ${name}
+      Email: ${email}
+      Telefonas: ${phone || "-"}
+      Skyrius: ${department} (${departmentId})
+      Kategorija: ${category} (${categoryId})
+        `.trim(),
       }),
     });
 
@@ -124,9 +122,36 @@ export async function POST(req: Request) {
       );
     }
 
+    // add requester after ticket creation
+    const createdTicketId = ticketData.id;
+
+    if (requesterId && createdTicketId) {
+      const requesterRes = await fetch(
+        `${GLPI_URL}/Assistance/Ticket/${createdTicketId}/TeamMember`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            role: "requester",
+            id: requesterId,
+          }),
+        }
+      );
+
+      const requesterData = await requesterRes.json();
+
+      if (!requesterRes.ok) {
+        console.error("GLPI requester attach error:", requesterData);
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       ticket: ticketData,
+      requesterId,
     });
   } catch (err) {
     console.error("Create ticket error:", err);
