@@ -111,14 +111,7 @@ export async function POST(req: Request) {
         category: categoryId,
 
         // attach requester if found
-        ...(requesterId && {
-          team: [
-            {
-              role: "requester",
-              id: requesterId,
-            },
-          ],
-        }),
+
       }),
     });
 
