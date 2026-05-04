@@ -115,6 +115,8 @@ export async function POST(req: Request) {
         Skyrius: ${department} (${departmentId})
         Kategorija: ${category} (${categoryId})
         `.trim(),
+
+        category: categoryId, // assign category
       }),
     });
 
