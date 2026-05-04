@@ -82,24 +82,27 @@ export async function POST(req: Request) {
     }
 
     const ticketRes = await fetch(`${GLPI_URL}/Assistance/Ticket`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
       body: JSON.stringify({
         name: title,
         content: `
       ${description}
 
       ---
+      Vardas: ${name}
       Email: ${email}
       Telefonas: ${phone || "-"}
       `.trim(),
-        entities_id: departmentId,
-        itilcategories_id: categoryId,
+
+        entity: departmentId,
+        category: categoryId,
+
         ...(requesterId && {
-          users_id_recipient: requesterId,
+          team: [
+            {
+              role: "requester",
+              id: requesterId,
+            },
+          ],
         }),
       }),
     });
