@@ -62,36 +62,46 @@ export async function POST(req: Request) {
 
     const accessToken = tokenData.access_token;
 
+
+    // get glpi user by email
+    let requesterId: number | null = null;
+    const userRes = await fetch(
+      `${GLPI_URL}/Administration/User?searchText=${encodeURIComponent(email)}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const userData = await userRes.json();
+
+    if (userRes.ok && Array.isArray(userData) && userData.length > 0) {
+      requesterId = userData[0].id;
+    }
+
     const ticketRes = await fetch(`${GLPI_URL}/Assistance/Ticket`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-    body: JSON.stringify({
-      name: title,
-      content: `
-    Aprašymas:
-    ${description}
+      body: JSON.stringify({
+        name: title,
+        content: `
+      ${description}
 
-    Vardas:
-    ${name}
-
-    Email:
-    ${email}
-
-    Telefonas:
-    ${phone || "-"}
-
-    Skyrius:
-    ${department} (${departmentId})
-
-    Kategorija:
-    ${category} (${categoryId})
+      ---
+      Email: ${email}
+      Telefonas: ${phone || "-"}
       `.trim(),
-      entities_id: departmentId,
-      itilcategories_id: categoryId,
-    }),
+        entities_id: departmentId,
+        itilcategories_id: categoryId,
+        ...(requesterId && {
+          users_id_recipient: requesterId,
+        }),
+      }),
     });
 
     const ticketData = await ticketRes.json();
