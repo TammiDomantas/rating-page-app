@@ -85,6 +85,11 @@ export async function POST(req: Request) {
       requesterId = userData[0].id;
     }
 
+    // log result for user lookup
+    console.log("GLPI user lookup result:", userData);
+    console.log("Requester ID:", requesterId);
+
+
     // Create ticket first, without category/entity/team for now
     const ticketRes = await fetch(`${GLPI_URL}/Assistance/Ticket`, {
       method: "POST",
