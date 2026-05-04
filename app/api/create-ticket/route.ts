@@ -149,6 +149,7 @@ export async function POST(req: Request) {
           },
           body: JSON.stringify({
             role: "requester",
+            type: "User",
             id: requesterId,
           }),
         }
