@@ -46,99 +46,99 @@ export default function CreateTicketPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <form 
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-xl shadow w-full max-w-md space-y-4"
-        >
+  <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
+    {/* TOP BAR */}
+    <div className="bg-[#1f5fa8] text-white px-10 py-4 text-lg font-bold">
+      Respublikinės Šiaulių Ligoninės Pagalba
+    </div>
+
+    {/* WRAPPER */}
+    <div className="mx-auto mt-8 max-w-4xl border border-[#d9e1ec] bg-white">
+      {/* HEADER */}
+      <div className="border-b border-[#e1e7f0] px-8 py-6">
+        <h1 className="text-2xl font-bold text-[#1f5fa8]">
+          Užklausos sukūrimas
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Norėdami užregistruoti savo užklausą, užpildykite formą.
+        </p>
+      </div>
+
+      {/* FORM */}
+      <form onSubmit={handleSubmit} className="px-8 py-6 space-y-5">
 
         <div>
-          <label htmlFor="title" className="block mb-1 font-medium text-gray-600">
+          <label className="mb-1 block text-sm font-bold">
             Užklausos antraštė:
           </label>
-
           <input
-            type="text"
-            id="title"
             name="title"
             required
-            className="w-full border rounded-lg p-2 text-gray-600"
+            className="w-full border border-[#cfd7e3] px-3 py-2 text-sm focus:border-[#1f5fa8] focus:outline-none"
           />
         </div>
 
         <div>
-          <label htmlFor="description" className="block mb-1 font-medium text-gray-600">
+          <label className="mb-1 block text-sm font-bold">
             Aprašymas:
           </label>
-
           <textarea
-            id="description"
             name="description"
-            className="w-full border rounded-lg p-2 h-40 text-gray-600"
+            required
+            className="h-40 w-full resize-y border border-[#cfd7e3] px-3 py-2 text-sm focus:border-[#1f5fa8] focus:outline-none"
           />
         </div>
 
-        <div>
-          <label htmlFor="email" className="block mb-1 font-medium text-gray-600">
-            Jūsų email:
-          </label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-bold">
+              Jūsų email:
+            </label>
+            <input
+              name="email"
+              required
+              className="w-full border border-[#cfd7e3] px-3 py-2 text-sm"
+            />
+          </div>
 
-          <input
-            type="text"
-            id="email"
-            name="email"
-            required
-            className="w-full border rounded-lg p-2 text-gray-600"
-          />
-        </div>  
-
-        <div>
-          <label htmlFor="name" className="block mb-1 font-medium text-gray-600">
-            Jūsų vardas:
-          </label>
-
-          <input
-            type="text"
-            id="name"
-            name="name"
-            required
-            className="w-full border rounded-lg p-2 text-gray-600"
-          />
+          <div>
+            <label className="mb-1 block text-sm font-bold">
+              Jūsų vardas:
+            </label>
+            <input
+              name="name"
+              required
+              className="w-full border border-[#cfd7e3] px-3 py-2 text-sm"
+            />
+          </div>
         </div>
 
         <div>
-
-        <label htmlFor="phone" className="block mb-1 font-medium text-gray-600">
-        Jūsų telefono numeris:
-        </label>
-
-        <input
-            id="phone"
+          <label className="mb-1 block text-sm font-bold">
+            Jūsų telefono numeris:
+          </label>
+          <input
             name="phone"
             type="tel"
             onInput={(e) =>
-            (e.currentTarget.value = e.currentTarget.value.replace(/\D/g, ""))
+              (e.currentTarget.value = e.currentTarget.value.replace(/\D/g, ""))
             }
-            className="w-full border rounded-lg p-2 text-gray-600"
-        />
+            className="w-full border border-[#cfd7e3] px-3 py-2 text-sm focus:border-[#1f5fa8] focus:outline-none"
+          />
         </div>
 
         <div>
-  
-        <select 
-          name="department"
-          required
-          className="w-full border rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
-        >
+          <select
+            name="department"
+            required
+            className="w-full border border-[#cfd7e3] bg-white px-3 py-2 text-sm focus:border-[#1f5fa8] focus:outline-none"
+          >
             <option value="">Pasirinkite savo skyrių</option>
-            {/* 
-            <option value=""></option>
-            */}
             <option value="Administracija (MVK)">Administracija (MVK)</option>
             <option value="Administracija (OK)">Administracija (OK)</option>
             <option value="Administracija (PSI)">Administracija (PSI)</option>
             <option value="Administracija (SL)">Administracija (SL)</option>
-            <option value="Administracija (TUB)">Administracija (TUV)</option>
+            <option value="Administracija (TUB)">Administracija (TUB)</option>
             <option value="Akių ligų skyrius (SL)">Akių ligų skyrius (SL)</option>
             <option value="Akušerijos skyrius (MVK)">Akušerijos skyrius (MVK)</option>
             <option value="Ambulatorinės chirurgijos skyrius (SL)">Ambulatorinės chirurgijos skyrius (SL)</option>
@@ -167,57 +167,49 @@ export default function CreateTicketPage() {
             <option value="Laboratorinės diagnostikos skyriaus padalinys (MVK)">Laboratorinės diagnostikos skyriaus padalinys (MVK)</option>
             <option value="Laboratorinės diagnostikos skyriaus padalinys (OK)">Laboratorinės diagnostikos skyriaus padalinys (OK)</option>
             <option value="Laboratorinės diagnostikos skyrius (SL)">Laboratorinės diagnostikos skyrius (SL)</option>
-        </select>    
+          </select>
         </div>
 
         <div>
-        <select
-        name="category"
-        required 
-        className="w-full border rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600"
-        >
+          <select
+            name="category"
+            required
+            className="w-full border border-[#cfd7e3] bg-white px-3 py-2 text-sm focus:border-[#1f5fa8] focus:outline-none"
+          >
             <option value="">Pasirinkite užklausos kategoriją</option>
-            {/*
-            <optgroup label=""> 
-                <option value=""></option>
+            <optgroup label="Informacinių technologijų skyrius">
+              <option value="DVS">DVS</option>
+              <option value="Elektroninis paštas">Elektroninis paštas</option>
+              <option value="ESIS">Esis</option>
+              <option value="Kita (NE KROVIMO DARBAI)">Kita (NE KROVIMO DARBAI)</option>
+              <option value="Kompiuteris">Kompiuteris</option>
+              <option value="medDream">medDream</option>
+              <option value="Pirkimai">Pirkimai</option>
+              <option value="Spausdintuvas">Spausdintuvas</option>
+              <option value="Tabeliai-Grafikai">Tabeliai-Grafikai</option>
+              <option value="Vartotojai">Vartotojai</option>
             </optgroup>
-            */}
-            <optgroup label="Informacinių technologijų skyrius"> 
-                <option value="DVS">DVS</option>
-                <option value="Elektroninis paštas">Elektroninis paštas</option>
-                <option value="ESIS">Esis</option>
-                <option value="Kita (NE KROVIMO DARBAI)">Kita (NE KROVIMO DARBAI)</option>
-                <option value="Kompiuteris">Kompiuteris</option>
-                <option value="medDream">medDream</option>
-                <option value="Pirkimai">Pirkimai</option>
-                <option value="Spausdintuvas">Spausdintuvas</option>
-                <option value="Tabeliai-Grafikai">Tabeliai-Grafikai</option>
-                <option value="Vartotojai">Vartotojai</option>
-            </optgroup>
-        </select>    
+          </select>
         </div>
 
-        <button
+        <div className="pt-3">
+          <button
             type="submit"
-            disabled={loading}// no double submit
-            className="w-full flex items-center justify-center bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition font-medium"
-            >
+            disabled={loading}
+            className="bg-[#1f5fa8] px-6 py-3 text-sm font-medium text-white hover:bg-[#174a82] transition disabled:opacity-50"
+          >
             {loading ? "Siunčiama..." : "Pateikti užklausą"}
-        </button>
+          </button>
+        </div>
+
         <Link
-            href="/"
-            className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl hover:bg-blue-700 transition"
-            >
-              Grįžti atgal
+          href="/"
+          className="inline-block bg-[#1f5fa8] px-6 py-3 text-sm font-medium text-white hover:bg-[#174a82] transition"
+        >
+          Grįžti atgal
         </Link>
-
       </form>
-    </main>
-
-
-
-
-
-
+    </div>
+  </main>
   )
 }
