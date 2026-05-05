@@ -1,10 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function CreateTicketPage() {
 
   const [loading, setLoading] = useState(false); 
+  const router = useRouter;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,7 +40,7 @@ export default function CreateTicketPage() {
       return;
     }
 
-    alert("Užklausa sėkmingai sukurta.");
+    router.push("/ticket-made");
 
     e.currentTarget.reset(); 
   }
@@ -206,7 +208,7 @@ export default function CreateTicketPage() {
             href="/"
             className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl hover:bg-blue-700 transition"
             >
-              Gryžti atgal
+              Grįžti atgal
         </Link>
 
       </form>
