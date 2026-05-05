@@ -63,50 +63,64 @@ export default async function RatingsSummaryPage() {
     .sort((a, b) => b.averageRating - a.averageRating);
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-10">
-      <div className="mx-auto max-w-4xl rounded-2xl bg-white p-6 shadow">
-        <h1 className="mb-6 text-2xl font-bold text-gray-800">
+  <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
+    <div className="bg-[#1f5fa8] px-10 py-4 text-lg font-bold text-white">
+      Respublikinės Šiaulių Ligoninės Pagalba
+    </div>
+
+    <div className="mx-auto mt-8 max-w-4xl border border-[#d9e1ec] bg-white">
+      <div className="border-b border-[#e1e7f0] px-8 py-6">
+        <h1 className="text-2xl font-bold text-[#1f5fa8]">
           Technikų įvertinimai
         </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Technikų įvertinimų suvestinė pagal pateiktus naudotojų įvertinimus.
+        </p>
+      </div>
 
+      <div className="px-8 py-6">
         {summary.length === 0 ? (
-          <p className="text-gray-600">Įvertinimų dar nėra.</p>
+          <p className="text-sm text-gray-600">Įvertinimų dar nėra.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full border-collapse">
+            <table className="min-w-full border-collapse text-sm">
               <thead>
-                <tr className="border-b text-left">
-                  <th className="px-4 py-3 text-sm font-semibold text-gray-700">
+                <tr className="border-b bg-[#f2f5f9] text-left">
+                  <th className="px-4 py-3 font-bold text-gray-700">
                     Technikas
                   </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 font-bold text-gray-700">
                     Įvertinimų skaičius
                   </th>
-                  <th className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 font-bold text-gray-700">
                     Vidutinis įvertinimas
                   </th>
                 </tr>
               </thead>
+
               <tbody>
                 {summary.map((row) => (
                   <tr key={row.technicianName} className="border-b last:border-b-0">
-                    <td className="px-4 py-3 text-gray-800">{row.technicianName}</td>
-                    <td className="px-4 py-3 text-gray-800">{row.ratingCount}</td>
-                    <td className="px-4 py-3 text-gray-800">{row.averageRating}</td>
+                    <td className="px-4 py-3">{row.technicianName}</td>
+                    <td className="px-4 py-3">{row.ratingCount}</td>
+                    <td className="px-4 py-3">{row.averageRating}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         )}
-              <Link
-                href="/"
-                className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl hover:bg-blue-700 transition"
-                >
-                Grįžti atgal
-              </Link>
-      </div>
 
-    </main>
+        <div className="pt-6">
+          <Link
+            href="/"
+            className="inline-block border border-[#cfd7e3] px-5 py-2 text-sm hover:bg-gray-100 transition"
+          >
+            Grįžti atgal
+          </Link>
+        </div>
+      </div>
+    </div>
+  </main>
   );
 }
