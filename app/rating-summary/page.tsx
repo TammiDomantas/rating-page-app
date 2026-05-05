@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
 
 type RatingRow = {
   technician_name: string | null;
@@ -99,6 +100,14 @@ export default async function RatingsSummaryPage() {
           </div>
         )}
       </div>
+
+      <Link
+        href="/"
+        className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl hover:bg-blue-700 transition"
+        >
+        Grįžti atgal
+      </Link>
+
     </main>
   );
 }
