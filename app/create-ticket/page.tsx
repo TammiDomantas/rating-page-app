@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 export default function CreateTicketPage() {
 
   const [loading, setLoading] = useState(false); 
-  const router = useRouter;
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
