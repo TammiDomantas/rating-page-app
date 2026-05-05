@@ -162,11 +162,9 @@ export default function CreateTicketPage() {
             <option value="Konsultacijų skyrius (SL)">Konsultacijų skyrius (SL)</option>
             <option value="Konsultacijų skyrius (TUB)">Konsultacijų skyrius (TUB)</option>
             <option value="Kraujo bankas (SL)">Kraujo bankas (SL)</option>
-            <option value="Laboratorinės diagnostikos skyriaus padalinys (MVK)"></option>
-            <option value="Laboratorinės diagnostikos skyriaus padalinys (OK)"></option>
-            <option value="Laboratorinės diagnostikos skyrius (SL)"></option>
-            <option value=""></option>
-            <option value=""></option>
+            <option value="Laboratorinės diagnostikos skyriaus padalinys (MVK)">Laboratorinės diagnostikos skyriaus padalinys (MVK)</option>
+            <option value="Laboratorinės diagnostikos skyriaus padalinys (OK)">Laboratorinės diagnostikos skyriaus padalinys (OK)</option>
+            <option value="Laboratorinės diagnostikos skyrius (SL)">Laboratorinės diagnostikos skyrius (SL)</option>
         </select>    
         </div>
 
