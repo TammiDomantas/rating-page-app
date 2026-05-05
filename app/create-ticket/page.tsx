@@ -90,12 +90,13 @@ export default function CreateTicketPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
           <div>
             <label className="mb-1 block text-sm font-bold">
-              Jūsų email:
+              Vardas
             </label>
             <input
-              name="email"
+              name="name"
               required
               className="w-full border border-[#cfd7e3] px-3 py-2 text-sm"
             />
@@ -103,10 +104,10 @@ export default function CreateTicketPage() {
 
           <div>
             <label className="mb-1 block text-sm font-bold">
-              Jūsų vardas:
+              El. paštas
             </label>
             <input
-              name="name"
+              name="email"
               required
               className="w-full border border-[#cfd7e3] px-3 py-2 text-sm"
             />
@@ -115,7 +116,7 @@ export default function CreateTicketPage() {
 
         <div>
           <label className="mb-1 block text-sm font-bold">
-            Jūsų telefono numeris:
+            Telefono nr.
           </label>
           <input
             name="phone"
