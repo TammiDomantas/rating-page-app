@@ -100,10 +100,14 @@ export async function POST(req: Request) {
             return ticket;
           }
 
-          const latestStatus = String(
-            glpiTicket.status ?? ticket.status
-          );
+          const latestStatus =
+            glpiTicket.status?.name ??
+            glpiTicket.status?.label ??
+            glpiTicket.status?.value ??
+            ticket.status;
 
+          console.log("GLPI ticket status:", glpiTicket.status);
+          
           // update supabase
           await supabase
             .from("submitted_tickets")
