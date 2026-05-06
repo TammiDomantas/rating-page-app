@@ -94,15 +94,23 @@ export default function RatingPage() {
   // while still loading
   if (loadingContext) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="bg-white p-8 rounded-2xl shadow w-full max-w-md text-center">
+      <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
+        <div className="bg-[#1f5fa8] px-10 py-4 text-lg font-bold text-white">
+          Respublikinės Šiaulių Ligoninės Pagalba
+        </div>
 
-          <p className="text-gray-600">
+        <div className="mx-auto mt-16 max-w-xl border border-[#d9e1ec] bg-white text-center">
+          <div className="border-b border-[#e1e7f0] px-8 py-6">
+            <h1 className="text-2xl font-bold text-[#1f5fa8]">
+              Kraunama
+            </h1>
+          </div>
 
-            Kraunama užklausos informacija...
-
-          </p>
-
+          <div className="px-8 py-8">
+            <p className="text-sm text-gray-600">
+              Kraunama užklausos informacija...
+            </p>
+          </div>
         </div>
       </main>
     );
@@ -111,23 +119,24 @@ export default function RatingPage() {
 
   // if failed to load or rating not allowed
   if (contextError || !context || !context.ratingAllowed) {
-
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="bg-white p-8 rounded-2xl shadow w-full max-w-md text-center">
+      <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
+        <div className="bg-[#1f5fa8] px-10 py-4 text-lg font-bold text-white">
+          Respublikinės Šiaulių Ligoninės Pagalba
+        </div>
 
-          <h1 className="text-xl text-gray-700 font-bold mb-3">
+        <div className="mx-auto mt-16 max-w-xl border border-[#d9e1ec] bg-white text-center">
+          <div className="border-b border-[#e1e7f0] px-8 py-6">
+            <h1 className="text-2xl font-bold text-[#1f5fa8]">
+              Įvertinimas negalimas
+            </h1>
+          </div>
 
-            Įvertinimas negalimas
-
-          </h1>
-
-          <p className="text-gray-600">
-
-            {contextError || "Šios užklausos įvertinti negalima."}
-
-          </p>
-
+          <div className="px-8 py-8">
+            <p className="text-sm text-gray-600">
+              {contextError || "Šios užklausos įvertinti negalima."}
+            </p>
+          </div>
         </div>
       </main>
     );
@@ -135,69 +144,97 @@ export default function RatingPage() {
 
   // if ticket was already rated
   if (context.alreadyRated) {
-  return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow w-full max-w-md text-center">
-        <h1 className="text-xl text-gray-700 font-bold mb-3">
-          Įvertinimas jau pateiktas
-        </h1>
+    return (
+      <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
+        <div className="bg-[#1f5fa8] px-10 py-4 text-lg font-bold text-white">
+          Respublikinės Šiaulių Ligoninės Pagalba
+        </div>
 
-        <p className="text-gray-600">
-          Ši užklausa jau įvertinta.
-        </p>
-      </div>
-    </main>
-  );
+        <div className="mx-auto mt-16 max-w-xl border border-[#d9e1ec] bg-white text-center">
+          <div className="border-b border-[#e1e7f0] px-8 py-6">
+            <h1 className="text-2xl font-bold text-[#1f5fa8]">
+              Įvertinimas jau pateiktas
+            </h1>
+          </div>
+
+          <div className="px-8 py-8">
+            <p className="text-sm text-gray-600">
+              Ši užklausa jau įvertinta.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   // main rating form UI
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow w-full max-w-md">
-        <h1 className="text-xl text-gray-600 font-bold text-center mb-2">
-          Įvertinkite užklausos įvykdymą
-        </h1>
-        
-        <p className="text-gray-600 text-center mb-2">
-          Užklausa #{context.ticketId}
-        </p>
-
-        <p className="text-gray-600 text-center mb-6">
-          Technikas: {context.technician?.name || "Nenurodytas"}
-        </p>
-
-        <div className="flex justify-center gap-3 mb-6">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              onClick={() => setRating(star)}
-              className={`text-3xl ${
-                star <= rating
-                  ? "opacity-100"
-                  : "opacity-30"
-              }`}
-            >
-              ⭐
-            </button>
-          ))}
-        </div>
-
-        <textarea
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Komentaras"
-          className="w-full border rounded-lg p-2 h-28 mb-4 text-gray-400"
-        />
-
-        <button
-          onClick={submitRating}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
-        >
-          Pateikti įvertinimą
-        </button>
-
+    <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
+      <div className="bg-[#1f5fa8] px-10 py-4 text-lg font-bold text-white">
+        Respublikinės Šiaulių Ligoninės Pagalba
       </div>
 
+      <div className="mx-auto mt-8 max-w-2xl border border-[#d9e1ec] bg-white">
+        <div className="border-b border-[#e1e7f0] px-8 py-6">
+          <h1 className="text-2xl font-bold text-[#1f5fa8]">
+            Įvertinkite užklausos įvykdymą
+          </h1>
+
+          <p className="mt-2 text-sm text-gray-600">
+            Užklausa #{context.ticketId}
+          </p>
+
+          <p className="mt-1 text-sm text-gray-600">
+            Technikas: {context.technician?.name || "Nenurodytas"}
+          </p>
+        </div>
+
+        <div className="px-8 py-6 space-y-6">
+          <div>
+            <label className="mb-2 block text-sm font-bold">
+              Įvertinimas
+            </label>
+
+            <div className="flex gap-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className={`text-3xl transition ${
+                    star <= rating ? "opacity-100" : "opacity-30"
+                  }`}
+                >
+                  ⭐
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-bold">
+              Komentaras
+            </label>
+
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Komentaras"
+              className="h-28 w-full resize-y border border-[#cfd7e3] px-3 py-2 text-sm focus:border-[#1f5fa8] focus:outline-none"
+            />
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={submitRating}
+              className="bg-[#1f5fa8] px-6 py-2 text-sm font-medium text-white transition hover:bg-[#174a82]"
+            >
+              Pateikti įvertinimą
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
