@@ -27,6 +27,13 @@ export default function HomePage() {
           Atidaryti įvertinimų lentelę
         </Link>
 
+        <Link
+          href="/status"
+          className="block w-full bg-blue-600 text-white text-center py-3 rounded-xl hover:bg-blue-700 transition"
+        >
+          Peržiurėti užklausų statusą
+        </Link>
+
       </div>
     </main>
   );
