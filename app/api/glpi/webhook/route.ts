@@ -70,6 +70,20 @@ export async function POST(req: Request) {
       }
     }
 
+    // update submitted tickets
+    if (ticketId && status) {
+        const { error: submittedTicketError } = await supabase
+          .from("submitted_tickets")
+          .update({
+            status: String(status),
+          })
+          .eq("glpi_ticket_id", String(ticketId));
+
+        if (submittedTicketError) {
+          console.error("submitted_tickets status update error:", submittedTicketError);
+        }
+    }
+
     // log
     console.log("EXTRACTED FIELDS:");
     console.log({
