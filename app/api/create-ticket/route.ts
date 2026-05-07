@@ -11,15 +11,33 @@ const GLPI_PASSWORD = process.env.GLPI_PASSWORD!;
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.formData();
 
-    const title = String(body.title || "").trim();
-    const description = String(body.description || "").trim();
-    const email = String(body.email || "").trim();
-    const name = String(body.name || "").trim();
-    const phone = String(body.phone || "").trim();
-    const department = String(body.department || "").trim();
-    const category = String(body.category || "").trim();
+    const title = String(body.get("title") || "").trim();
+    const description = String(body.get("description") || "").trim();
+    const email = String(body.get("email") || "").trim();
+    const name = String(body.get("name") || "").trim();
+    const phone = String(body.get("phone") || "").trim();
+    const department = String(body.get("department") || "").trim();
+    const category = String(body.get("category") || "").trim();
+
+    const attachments = body.getAll("attachments").filter(
+      (file): file is File => file instanceof File && file.size > 0
+    );
+
+    const maxSize = 10 * 1024 * 1024; // 10 MB
+
+    for (const file of attachments) {
+      if (file.size > maxSize) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "Failas per didelis. Maksimalus dydis: 10 MB.",
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     if (!title || !description || !email || !name || !department || !category) {
       return NextResponse.json(
@@ -139,6 +157,31 @@ export async function POST(req: Request) {
     console.log("Created ticket data:", ticketData);
 
     const createdTicketId = ticketData.id;
+
+    // add attachment
+    
+    for (const file of attachments) {
+      const uploadForm = new FormData();
+
+      uploadForm.append("file", file);
+
+      const attachmentRes = await fetch(
+        `${GLPI_URL}/Assistance/Ticket/${createdTicketId}/Timeline/Document`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: uploadForm,
+        }
+      );
+
+      const attachmentText = await attachmentRes.text();
+
+      if (!attachmentRes.ok) {
+        console.error("GLPI attachment upload error:", attachmentText);
+      }
+    }
 
     // Add requester after ticket creation
     if (requesterId && createdTicketId) {

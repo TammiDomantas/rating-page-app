@@ -17,18 +17,7 @@ export default function CreateTicketPage() {
 
     const res = await fetch("/api/create-ticket", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: formData.get("title"),
-        description: formData.get("description"),
-        email: formData.get("email"),
-        name: formData.get("name"),
-        phone: formData.get("phone"),
-        department: formData.get("department"), 
-        category: formData.get("category"), 
-      }),
+      body: formData,
     });
 
     const data = await res.json();
@@ -192,6 +181,21 @@ export default function CreateTicketPage() {
             </optgroup>
           </select>
         </div>
+
+        <div>
+          <label className="block text-sm font-bold mb-1">
+            Priedai
+          </label>
+
+          <input
+            name="attachments"
+            type="file"
+            multiple
+            className="w-full border border-[#cfd7e3] bg-white px-3 py-2 text-sm"
+          />
+        </div>
+
+
 
         <div className="pt-3">
           <button
