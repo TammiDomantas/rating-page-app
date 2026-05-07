@@ -1,6 +1,9 @@
 export const dynamic = "force-dynamic";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
 
 type RatingRow = {
   technician_name: string | null;
@@ -14,6 +17,15 @@ type SummaryRow = {
 };
 
 export default async function RatingsSummaryPage() {
+
+  const cookieStore = await cookies();
+  const isAdmin = cookieStore.get("admin-auth"); // check if admin
+  if (!isAdmin) { // if not, redirect to login page
+    redirect("/admin/login");
+  }
+
+
+
   const { data, error } = await supabase
     .from("ratings")
     .select("technician_name, rating")
