@@ -55,7 +55,7 @@ async function uploadAttachmentsToGlpi(ticketId: number, files: File[]) {
 
       uploadForm.append("filename[0]", file, file.name);
 
-      const uploadRes = await fetch(`${GLPI_REST_URL}/Document`, {
+      const uploadRes = await fetch(`${GLPI_REST_URL}/Document/`, {
         method: "POST",
         headers: {
           "App-Token": GLPI_APP_TOKEN,
@@ -68,8 +68,12 @@ async function uploadAttachmentsToGlpi(ticketId: number, files: File[]) {
 
       if (!uploadRes.ok) {
         console.error("GLPI legacy attachment upload error:", uploadText);
+        console.error("GLPI legacy attachment status:", uploadRes.status);
+        console.error("GLPI legacy attachment content-type:", uploadRes.headers.get("content-type"));
       } else {
         console.log("GLPI legacy attachment uploaded:", uploadText);
+        console.error("GLPI legacy attachment status:", uploadRes.status);
+        console.error("GLPI legacy attachment content-type:", uploadRes.headers.get("content-type"));
       }
     }
   } finally {
