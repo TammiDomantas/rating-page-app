@@ -9,6 +9,80 @@ const GLPI_CLIENT_SECRET = process.env.GLPI_CLIENT_SECRET!;
 const GLPI_USERNAME = process.env.GLPI_USERNAME!;
 const GLPI_PASSWORD = process.env.GLPI_PASSWORD!;
 
+async function uploadAttachmentsToGlpi(ticketId: number, files: File[]) {
+  const GLPI_REST_URL = process.env.GLPI_REST_URL!;
+  const GLPI_APP_TOKEN = process.env.GLPI_APP_TOKEN!;
+  const GLPI_USER_TOKEN = process.env.GLPI_USER_TOKEN!;
+
+  if (!files.length) return;
+
+  const sessionRes = await fetch(`${GLPI_REST_URL}/initSession`, {
+    method: "GET",
+    headers: {
+      "App-Token": GLPI_APP_TOKEN,
+      Authorization: `user_token ${GLPI_USER_TOKEN}`,
+    },
+  });
+
+  const sessionData = await sessionRes.json();
+
+  if (!sessionRes.ok || !sessionData.session_token) {
+    console.error("GLPI legacy initSession error:", sessionData);
+    return;
+  }
+
+  const sessionToken = sessionData.session_token;
+
+  try {
+    for (const file of files) {
+      const uploadForm = new FormData();
+
+      uploadForm.append(
+        "uploadManifest",
+        new Blob(
+          [
+            JSON.stringify({
+              input: {
+                name: file.name,
+                _filename: [file.name],
+                tickets_id: String(ticketId),
+              },
+            }),
+          ],
+          { type: "application/json" }
+        )
+      );
+
+      uploadForm.append("filename[0]", file, file.name);
+
+      const uploadRes = await fetch(`${GLPI_REST_URL}/Document`, {
+        method: "POST",
+        headers: {
+          "App-Token": GLPI_APP_TOKEN,
+          "Session-Token": sessionToken,
+        },
+        body: uploadForm,
+      });
+
+      const uploadText = await uploadRes.text();
+
+      if (!uploadRes.ok) {
+        console.error("GLPI legacy attachment upload error:", uploadText);
+      } else {
+        console.log("GLPI legacy attachment uploaded:", uploadText);
+      }
+    }
+  } finally {
+    await fetch(`${GLPI_REST_URL}/killSession`, {
+      method: "GET",
+      headers: {
+        "App-Token": GLPI_APP_TOKEN,
+        "Session-Token": sessionToken,
+      },
+    });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.formData();
@@ -157,32 +231,7 @@ export async function POST(req: Request) {
     console.log("Created ticket data:", ticketData);
 
     const createdTicketId = ticketData.id;
-
-    // add attachment
-    
-    for (const file of attachments) {
-      const uploadForm = new FormData();
-
-      uploadForm.append("type", "Document");
-      uploadForm.append("file", file);
-      
-      const attachmentRes = await fetch(
-        `${GLPI_URL}/Assistance/Ticket/${createdTicketId}/Timeline/Document`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: uploadForm,
-        }
-      );
-
-      const attachmentText = await attachmentRes.text();
-
-      if (!attachmentRes.ok) {
-        console.error("GLPI attachment upload error:", attachmentText);
-      }
-    }
+    await uploadAttachmentsToGlpi(createdTicketId, attachments);
 
     // Add requester after ticket creation
     if (requesterId && createdTicketId) {
