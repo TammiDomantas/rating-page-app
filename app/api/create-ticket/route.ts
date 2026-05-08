@@ -39,18 +39,13 @@ async function uploadAttachmentsToGlpi(ticketId: number, files: File[]) {
 
       uploadForm.append(
         "uploadManifest",
-        new Blob(
-          [
-            JSON.stringify({
-              input: {
-                name: file.name,
-                _filename: [file.name],
-                tickets_id: String(ticketId),
-              },
-            }),
-          ],
-          { type: "application/json" }
-        )
+        JSON.stringify({
+          input: {
+            name: `Attachment for ticket ${ticketId}`,
+            _filename: [file.name],
+            tickets_id: ticketId,
+          },
+        })
       );
 
       uploadForm.append("filename[0]", file, file.name);
@@ -60,6 +55,7 @@ async function uploadAttachmentsToGlpi(ticketId: number, files: File[]) {
         headers: {
           "App-Token": GLPI_APP_TOKEN,
           "Session-Token": sessionToken,
+          Accept: "application/json",
         },
         body: uploadForm,
       });
