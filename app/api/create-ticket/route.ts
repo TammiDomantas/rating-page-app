@@ -163,8 +163,9 @@ export async function POST(req: Request) {
     for (const file of attachments) {
       const uploadForm = new FormData();
 
+      uploadForm.append("type", "Document");
       uploadForm.append("file", file);
-
+      
       const attachmentRes = await fetch(
         `${GLPI_URL}/Assistance/Ticket/${createdTicketId}/Timeline/Document`,
         {
