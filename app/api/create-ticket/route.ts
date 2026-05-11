@@ -64,12 +64,42 @@ async function uploadAttachmentsToGlpi(ticketId: number, files: File[]) {
 
       if (!uploadRes.ok) {
         console.error("GLPI legacy attachment upload error:", uploadText);
-        console.error("GLPI legacy attachment status:", uploadRes.status);
-        console.error("GLPI legacy attachment content-type:", uploadRes.headers.get("content-type"));
-      } else {
-        console.log("GLPI legacy attachment uploaded:", uploadText);
-        console.error("GLPI legacy attachment status:", uploadRes.status);
-        console.error("GLPI legacy attachment content-type:", uploadRes.headers.get("content-type"));
+        continue;
+      }
+
+      // Link uploaded document to ticket
+      try {
+        const uploadData = JSON.parse(uploadText);
+        const documentId = uploadData.id;
+
+        if (!documentId) {
+          console.error("GLPI attachment uploaded but no document id:", uploadText);
+          continue;
+        }
+
+        const linkRes = await fetch(`${GLPI_REST_URL}/Document_Item/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "App-Token": GLPI_APP_TOKEN,
+            "Session-Token": sessionToken,
+          },
+          body: JSON.stringify({
+            input: {
+              documents_id: documentId,
+              itemtype: "Ticket",
+              items_id: ticketId,
+            },
+          }),
+        });
+
+        const linkText = await linkRes.text();
+
+        if (!linkRes.ok) {
+          console.error("GLPI document link error:", linkText);
+        }
+      } catch (err) {
+        console.error("GLPI document link parse/error:", err);
       }
     }
   } finally {
@@ -231,6 +261,8 @@ export async function POST(req: Request) {
     console.log("Created ticket data:", ticketData);
 
     const createdTicketId = ticketData.id;
+
+    // Upload attachments after ticket creation
     await uploadAttachmentsToGlpi(createdTicketId, attachments);
 
     // Add requester after ticket creation
@@ -261,7 +293,6 @@ export async function POST(req: Request) {
       }
     }
 
-
     // store ticket in supabase
     await supabase.from("submitted_tickets").insert({
       email,
@@ -270,7 +301,6 @@ export async function POST(req: Request) {
       glpi_ticket_id: String(ticketData.id),
       status: "created",
     });
-
 
     return NextResponse.json({
       ok: true,
