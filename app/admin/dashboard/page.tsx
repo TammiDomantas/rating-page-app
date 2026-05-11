@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase";
+import Link from "next/link";
+
 
 export default async function AdminDashboardPage() {
   const { data: tickets, error: ticketsError } = await supabase
@@ -117,6 +119,21 @@ export default async function AdminDashboardPage() {
           </table>
         </div>
       </div>
+      <div className="flex gap-3 pt-6">
+        <Link
+            href="/rating-summary"
+            className="inline-block border border-[#cfd7e3] px-5 py-2 text-sm hover:bg-gray-100 transition"
+        >
+            Grįžti į įvertinimų suvestinę
+        </Link>
+
+        <Link
+            href="/"
+            className="inline-block bg-[#1f5fa8] px-5 py-2 text-sm font-medium text-white hover:bg-[#174a82] transition"
+        >
+            Grįžti į pradžią
+        </Link>
+       </div>
     </main>
   );
 }
