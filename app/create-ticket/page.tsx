@@ -183,16 +183,28 @@ export default function CreateTicketPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-bold mb-1">
+          <label className="block text-sm font-bold mb-2">
             Priedai
           </label>
 
-          <input
-            name="attachments"
-            type="file"
-            multiple
-            className="w-full border border-[#cfd7e3] bg-white px-3 py-2 text-sm"
-          />
+          <label className="flex items-center justify-center w-full cursor-pointer rounded-lg border border-dashed border-[#cfd7e3] bg-[#f8fafc] px-4 py-6 text-sm text-gray-600 transition hover:bg-[#eef4ff] hover:border-[#4f46e5]">
+            <div className="text-center">
+              <p className="font-medium text-gray-700">
+                Pasirinkite failus
+              </p>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Galite įkelti kelis failus
+              </p>
+            </div>
+
+            <input
+              name="attachments"
+              type="file"
+              multiple
+              className="hidden"
+            />
+          </label>
         </div>
 
 
