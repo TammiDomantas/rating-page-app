@@ -97,6 +97,7 @@ export default function CreateTicketPage() {
             </label>
             <input
               name="email"
+              type="email"
               required
               className="w-full border border-[#cfd7e3] px-3 py-2 text-sm"
             />
