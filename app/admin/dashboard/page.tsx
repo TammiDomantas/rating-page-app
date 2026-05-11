@@ -118,22 +118,22 @@ export default async function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
-      </div>
-      <div className="flex gap-3 pt-6">
-        <Link
-            href="/rating-summary"
-            className="inline-block border border-[#cfd7e3] px-5 py-2 text-sm hover:bg-gray-100 transition"
-        >
-            Grįžti į įvertinimų suvestinę
-        </Link>
+        <div className="flex gap-3 pt-6">
+            <Link
+                href="/rating-summary"
+                className="inline-block border border-[#cfd7e3] px-5 py-2 text-sm hover:bg-gray-100 transition"
+            >
+                Grįžti į įvertinimų suvestinę
+            </Link>
 
-        <Link
-            href="/"
-            className="inline-block bg-[#1f5fa8] px-5 py-2 text-sm font-medium text-white hover:bg-[#174a82] transition"
-        >
-            Grįžti į pradžią
-        </Link>
-       </div>
+            <Link
+                href="/"
+                className="inline-block bg-[#1f5fa8] px-5 py-2 text-sm font-medium text-white hover:bg-[#174a82] transition"
+            >
+                Grįžti į pradžią
+            </Link>
+        </div>
+      </div>
     </main>
   );
 }
