@@ -225,6 +225,17 @@ export default function CreateTicketPage() {
                   </li>
                 ))}
               </ul>
+
+              <button
+                type="button"
+                onClick={() => setSelectedFiles([])}
+                className="mt-3 text-sm text-red-600 hover:text-red-700"
+              >
+                Išvalyti pasirinktus failus
+              </button>
+
+
+
             </div>
           )}
         </div>
