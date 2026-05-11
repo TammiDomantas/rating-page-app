@@ -123,12 +123,19 @@ export default async function RatingsSummaryPage() {
           </div>
         )}
 
-        <div className="pt-6">
+        <div className="flex gap-3 pt-6">
           <Link
             href="/"
             className="inline-block border border-[#cfd7e3] px-5 py-2 text-sm hover:bg-gray-100 transition"
           >
             Grįžti atgal
+          </Link>
+
+          <Link
+            href="/admin/dashboard"
+            className="inline-block bg-[#1f5fa8] px-5 py-2 text-sm font-medium text-white hover:bg-[#174a82] transition"
+          >
+            Užklausų sąrašas
           </Link>
         </div>
       </div>
