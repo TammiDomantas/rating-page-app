@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 export default function CreateTicketPage() {
 
   const [loading, setLoading] = useState(false); 
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -29,9 +30,9 @@ export default function CreateTicketPage() {
       return;
     }
 
-    router.push("/ticket-made");
-
-    e.currentTarget.reset(); 
+    setSelectedFiles([]);
+    e.currentTarget.reset();
+    router.push("/ticket-made"); 
   }
 
   return (
@@ -204,12 +205,30 @@ export default function CreateTicketPage() {
               type="file"
               multiple
               className="hidden"
+              onChange={(e) => setSelectedFiles(Array.from(e.target.files ?? []))}
             />
           </label>
+
+          {selectedFiles.length > 0 && (
+            <div className="mt-3 rounded border border-[#d9e1ec] bg-white p-3">
+              <p className="mb-2 text-sm font-bold text-gray-700">
+                Pasirinkti failai:
+              </p>
+
+              <ul className="space-y-1 text-sm text-gray-600">
+                {selectedFiles.map((file) => (
+                  <li key={file.name} className="flex justify-between gap-4">
+                    <span>{file.name}</span>
+                    <span className="text-xs text-gray-500">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
-
-
-
+        
         <div className="pt-3">
           <button
             type="submit"
