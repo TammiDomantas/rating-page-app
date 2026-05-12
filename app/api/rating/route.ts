@@ -147,6 +147,8 @@ export async function POST(req: Request) {
     }
 
     // save rating directly into GLPI
+    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+
     const updateRes = await fetch(
       `${GLPI_REST_URL}/TicketSatisfaction/${satisfaction.id}`,
       {
@@ -159,8 +161,10 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           input: [
             {
+              id: satisfaction.id,
               satisfaction: rating,
               comment: comment || "",
+              date_answered: now,
             },
           ],
         }),
@@ -172,6 +176,28 @@ export async function POST(req: Request) {
       "GLPI TicketSatisfaction update"
     );
     console.log("GLPI satisfaction update response:", updateData);
+
+    // verify data
+
+
+    const verifyRes = await fetch(
+      `${GLPI_REST_URL}/TicketSatisfaction/${satisfaction.id}`,
+      {
+        method: "GET",
+        headers: {
+          "App-Token": GLPI_APP_TOKEN,
+          "Session-Token": sessionToken,
+        },
+      }
+    );
+
+    const verifyData = await readJsonResponse(
+      verifyRes,
+      "GLPI TicketSatisfaction verify"
+    );
+
+    console.log("GLPI satisfaction verify response:", verifyData);
+
 
     if (!updateRes.ok || Array.isArray(updateData) && updateData[0] === "ERROR_GLPI_UPDATE") {
       console.error("GLPI satisfaction update error:", updateData);
