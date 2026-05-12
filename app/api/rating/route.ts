@@ -12,6 +12,19 @@ type TicketSatisfaction = {
   comment: string | null;
 };
 
+// helper
+async function readJsonResponse(res: Response, label: string) {
+  const text = await res.text();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error(`${label} returned non-JSON:`, text.slice(0, 500));
+    throw new Error(`${label} returned non-JSON`);
+  }
+}
+
+
 // create GLPI API session
 async function initGlpiSession() {
   const res = await fetch(`${GLPI_REST_URL}/initSession`, {
@@ -22,7 +35,7 @@ async function initGlpiSession() {
     },
   });
 
-  const data = await res.json();
+  const data = await readJsonResponse(res, "GLPI initSession");
 
   if (!res.ok) {
     console.error("GLPI initSession error:", data);
@@ -92,7 +105,10 @@ export async function POST(req: Request) {
       },
     });
 
-    const satisfactionData = await satisfactionRes.json();
+    const satisfactionData = await readJsonResponse(
+      satisfactionRes,
+      "GLPI TicketSatisfaction fetch"
+    );
 
     if (!satisfactionRes.ok) {
       console.error("GLPI TicketSatisfaction fetch error:", satisfactionData);
@@ -150,7 +166,10 @@ export async function POST(req: Request) {
       }
     );
 
-    const updateData = await updateRes.json();
+    const updateData = await readJsonResponse(
+      updateRes,
+      "GLPI TicketSatisfaction update"
+    );
 
     if (!updateRes.ok) {
       console.error("GLPI satisfaction update error:", updateData);
