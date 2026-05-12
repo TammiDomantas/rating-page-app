@@ -150,7 +150,7 @@ export async function POST(req: Request) {
     const updateRes = await fetch(
       `${GLPI_REST_URL}/TicketSatisfaction/${satisfaction.id}`,
       {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "App-Token": GLPI_APP_TOKEN,
@@ -159,7 +159,6 @@ export async function POST(req: Request) {
         body: JSON.stringify({
           input: [
             {
-              id: satisfaction.id,
               satisfaction: rating,
               comment: comment || "",
             },
