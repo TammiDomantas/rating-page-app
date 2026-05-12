@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const GLPI_API_BASE = process.env.GLPI_API_BASE!;
+const GLPI_REST_URL = process.env.GLPI_REST_URL!;
 const GLPI_APP_TOKEN = process.env.GLPI_APP_TOKEN!;
 const GLPI_USER_TOKEN = process.env.GLPI_USER_TOKEN!;
 
@@ -19,11 +19,11 @@ type GlpiTicket = {
 };
 
 async function initGlpiSession() {
-  const res = await fetch(`${GLPI_API_BASE}/initSession`, {
+  const res = await fetch(`${GLPI_REST_URL}/initSession`, {
     method: "GET",
     headers: {
       "App-Token": GLPI_APP_TOKEN,
-      Authorization: `Bearer ${GLPI_USER_TOKEN}`,
+      Authorization: `user_token ${GLPI_USER_TOKEN}`,
     },
   });
 
@@ -38,7 +38,7 @@ async function initGlpiSession() {
 }
 
 async function killGlpiSession(sessionToken: string) {
-  await fetch(`${GLPI_API_BASE}/killSession`, {
+  await fetch(`${GLPI_REST_URL}/killSession`, {
     method: "GET",
     headers: {
       "App-Token": GLPI_APP_TOKEN,
@@ -61,7 +61,7 @@ export async function GET(
     sessionToken = await initGlpiSession();
 
     // get GLPI ticket info
-    const ticketRes = await fetch(`${GLPI_API_BASE}/Ticket/${normalizedTicketId}`, {
+    const ticketRes = await fetch(`${GLPI_REST_URL}/Ticket/${normalizedTicketId}`, {
       method: "GET",
       headers: {
         "App-Token": GLPI_APP_TOKEN,
@@ -79,7 +79,7 @@ export async function GET(
     }
 
     // get GLPI satisfaction records
-    const satisfactionRes = await fetch(`${GLPI_API_BASE}/TicketSatisfaction`, {
+    const satisfactionRes = await fetch(`${GLPI_REST_URL}/TicketSatisfaction`, {
       method: "GET",
       headers: {
         "App-Token": GLPI_APP_TOKEN,
