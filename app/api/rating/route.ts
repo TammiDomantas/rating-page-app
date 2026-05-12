@@ -149,27 +149,24 @@ export async function POST(req: Request) {
     // save rating directly into GLPI
     const now = new Date().toISOString().slice(0, 19).replace("T", " ");
 
-    const updateRes = await fetch(
-      `${GLPI_REST_URL}/TicketSatisfaction/${satisfaction.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "App-Token": GLPI_APP_TOKEN,
-          "Session-Token": sessionToken,
-        },
-        body: JSON.stringify({
-          input: [
-            {
-              id: satisfaction.id,
-              satisfaction: rating,
-              comment: comment || "",
-              date_answered: now,
-            },
-          ],
-        }),
-      }
-    );
+    const updateRes = await fetch(`${GLPI_REST_URL}/TicketSatisfaction`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "App-Token": GLPI_APP_TOKEN,
+        "Session-Token": sessionToken,
+      },
+      body: JSON.stringify({
+        input: [
+          {
+            id: satisfaction.id,
+            satisfaction: rating,
+            comment: comment || "",
+            date_answered: now,
+          },
+        ],
+      }),
+    });
 
     const updateData = await readJsonResponse(
       updateRes,
@@ -179,24 +176,24 @@ export async function POST(req: Request) {
 
     // verify data
 
-
-    const verifyRes = await fetch(
-      `${GLPI_REST_URL}/TicketSatisfaction/${satisfaction.id}`,
-      {
-        method: "GET",
-        headers: {
-          "App-Token": GLPI_APP_TOKEN,
-          "Session-Token": sessionToken,
-        },
-      }
-    );
+    const verifyRes = await fetch(`${GLPI_REST_URL}/TicketSatisfaction`, {
+      method: "GET",
+      headers: {
+        "App-Token": GLPI_APP_TOKEN,
+        "Session-Token": sessionToken,
+      },
+    });
 
     const verifyData = await readJsonResponse(
       verifyRes,
       "GLPI TicketSatisfaction verify"
     );
 
-    console.log("GLPI satisfaction verify response:", verifyData);
+    const updatedSatisfaction = (verifyData as TicketSatisfaction[]).find(
+      (item) => String(item.tickets_id) === normalizedTicketId
+    );
+
+    console.log("GLPI satisfaction verify response:", updatedSatisfaction);
 
 
     if (!updateRes.ok || Array.isArray(updateData) && updateData[0] === "ERROR_GLPI_UPDATE") {
@@ -207,6 +204,19 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
+
+    if (
+      !updatedSatisfaction ||
+      updatedSatisfaction.satisfaction === null ||
+      updatedSatisfaction.date_answered === null
+    ) {
+      return NextResponse.json(
+        { ok: false, error: "GLPI did not save the rating" },
+        { status: 500 }
+      );
+    }
+
+
 
     return NextResponse.json({ ok: true });
   } catch (err) {
