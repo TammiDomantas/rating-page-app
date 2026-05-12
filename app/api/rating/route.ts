@@ -157,11 +157,13 @@ export async function POST(req: Request) {
           "Session-Token": sessionToken,
         },
         body: JSON.stringify({
-          input: {
-            id: satisfaction.id,
-            satisfaction: rating,
-            comment: comment || null,
-          },
+          input: [
+            {
+              id: satisfaction.id,
+              satisfaction: rating,
+              comment: comment || "",
+            },
+          ],
         }),
       }
     );
