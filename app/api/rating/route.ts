@@ -171,8 +171,9 @@ export async function POST(req: Request) {
       updateRes,
       "GLPI TicketSatisfaction update"
     );
+    console.log("GLPI satisfaction update response:", updateData);
 
-    if (!updateRes.ok) {
+    if (!updateRes.ok || Array.isArray(updateData) && updateData[0] === "ERROR_GLPI_UPDATE") {
       console.error("GLPI satisfaction update error:", updateData);
 
       return NextResponse.json(
