@@ -9,6 +9,8 @@ const GLPI_CLIENT_SECRET = process.env.GLPI_CLIENT_SECRET!;
 const GLPI_USERNAME = process.env.GLPI_USERNAME!;
 const GLPI_PASSWORD = process.env.GLPI_PASSWORD!;
 
+// File upload function
+
 async function uploadAttachmentsToGlpi(ticketId: number, files: File[]) {
   const GLPI_REST_URL = process.env.GLPI_REST_URL!;
   const GLPI_APP_TOKEN = process.env.GLPI_APP_TOKEN!;
