@@ -150,7 +150,7 @@ export async function POST(req: Request) {
     const updateRes = await fetch(
       `${GLPI_REST_URL}/TicketSatisfaction/${satisfaction.id}`,
       {
-        method: "PUT",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "App-Token": GLPI_APP_TOKEN,
