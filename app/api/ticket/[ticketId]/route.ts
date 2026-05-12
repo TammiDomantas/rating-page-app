@@ -1,60 +1,138 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+
+const GLPI_API_BASE = process.env.GLPI_API_BASE!;
+const GLPI_APP_TOKEN = process.env.GLPI_APP_TOKEN!;
+const GLPI_USER_TOKEN = process.env.GLPI_USER_TOKEN!;
+
+type TicketSatisfaction = {
+  id: number;
+  tickets_id: number;
+  date_answered: string | null;
+  satisfaction: number | null;
+  comment: string | null;
+};
+
+type GlpiTicket = {
+  id: number;
+  name?: string;
+  status?: number;
+};
+
+async function initGlpiSession() {
+  const res = await fetch(`${GLPI_API_BASE}/initSession`, {
+    method: "GET",
+    headers: {
+      "App-Token": GLPI_APP_TOKEN,
+      Authorization: `user_token ${GLPI_USER_TOKEN}`,
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    console.error("GLPI initSession error:", data);
+    throw new Error("Failed to initialize GLPI session");
+  }
+
+  return data.session_token as string;
+}
+
+async function killGlpiSession(sessionToken: string) {
+  await fetch(`${GLPI_API_BASE}/killSession`, {
+    method: "GET",
+    headers: {
+      "App-Token": GLPI_APP_TOKEN,
+      "Session-Token": sessionToken,
+    },
+  });
+}
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ ticketId: string }> }
 ) {
-  const { ticketId } = await params;
+  let sessionToken: string | null = null;
 
-  // get ticket context
-  const { data: contextData, error: contextError } = await supabase
-    .from("ticket_context")
-    .select("*")
-    .eq("ticket_id", ticketId)
-    .single();
+  try {
+    const { ticketId } = await params;
 
-  if (contextError || !contextData) {
-    return NextResponse.json(
-      { ok: false, error: "Ticket context not found" },
-      { status: 404 }
+    const normalizedTicketId = ticketId.replace(/^0+/, "") || "0";
+
+    sessionToken = await initGlpiSession();
+
+    // get GLPI ticket info
+    const ticketRes = await fetch(`${GLPI_API_BASE}/Ticket/${normalizedTicketId}`, {
+      method: "GET",
+      headers: {
+        "App-Token": GLPI_APP_TOKEN,
+        "Session-Token": sessionToken,
+      },
+    });
+
+    const ticketData = await ticketRes.json();
+
+    if (!ticketRes.ok) {
+      return NextResponse.json(
+        { ok: false, error: "Ticket not found" },
+        { status: 404 }
+      );
+    }
+
+    // get GLPI satisfaction records
+    const satisfactionRes = await fetch(`${GLPI_API_BASE}/TicketSatisfaction`, {
+      method: "GET",
+      headers: {
+        "App-Token": GLPI_APP_TOKEN,
+        "Session-Token": sessionToken,
+      },
+    });
+
+    const satisfactionData = await satisfactionRes.json();
+
+    if (!satisfactionRes.ok) {
+      console.error("GLPI TicketSatisfaction fetch error:", satisfactionData);
+
+      return NextResponse.json(
+        { ok: false, error: "Failed to load satisfaction data" },
+        { status: 500 }
+      );
+    }
+
+    // find satisfaction record for this ticket
+    const satisfaction = (satisfactionData as TicketSatisfaction[]).find(
+      (item) => String(item.tickets_id) === normalizedTicketId
     );
-  }
 
-  // check whether this ticket already has a rating
-  const { data: ratingData, error: ratingError } = await supabase
-    .from("ratings")
-    .select("ticket_id")
-    .eq("ticket_id", ticketId)
-    .maybeSingle();
+    const alreadyRated =
+      !!satisfaction &&
+      (satisfaction.date_answered !== null || satisfaction.satisfaction !== null);
 
-  if (ratingError) {
+    const ratingAllowed = !!satisfaction && !alreadyRated;
+
+    const ticket = ticketData as GlpiTicket;
+
+    return NextResponse.json({
+      ok: true,
+      context: {
+        ticketId: normalizedTicketId,
+        status: String(ticket.status ?? ""),
+        requester: null,
+        technician: null,
+        ratingAllowed,
+        createdAt: "",
+        alreadyRated,
+      },
+    });
+  } catch (err) {
+    console.error("Ticket context API error:", err);
+
     return NextResponse.json(
-      { ok: false, error: "Failed to check rating status" },
+      { ok: false, error: "Failed to load ticket context" },
       { status: 500 }
     );
+  } finally {
+    if (sessionToken) {
+      await killGlpiSession(sessionToken);
+    }
   }
-
-  return NextResponse.json({
-    ok: true,
-    context: {
-      ticketId: contextData.ticket_id,
-      status: contextData.status,
-      requester: contextData.requester_id || contextData.requester_name
-        ? {
-            id: contextData.requester_id ?? "",
-            name: contextData.requester_name ?? "",
-          }
-        : null,
-      technician: contextData.technician_id || contextData.technician_name
-        ? {
-            id: contextData.technician_id ?? "",
-            name: contextData.technician_name ?? "",
-          }
-        : null,
-      ratingAllowed: contextData.rating_allowed,
-      createdAt: contextData.created_at,
-      alreadyRated: !!ratingData,
-    },
-  });
 }

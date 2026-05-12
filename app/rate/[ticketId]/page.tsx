@@ -5,17 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 
 type TicketContext = {
   ticketId: string;
-  status: string;
-  requester: {
-    id: string;
-    name: string;
-  } | null;
   technician: {
     id: string;
     name: string;
   } | null;
   ratingAllowed: boolean;
-  createdAt: string;
   alreadyRated: boolean;
 };
 
@@ -70,6 +64,10 @@ export default function RatingPage() {
 
   // send rating to backend
   async function submitRating() {
+    if (rating === 0) {
+    alert("Pasirinkite įvertinimą (bent vieną žvaigždę).");
+    return;
+  }
   const res = await fetch("/api/rating", {
     method: "POST",
     headers: {
