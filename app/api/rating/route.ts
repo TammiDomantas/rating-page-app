@@ -147,7 +147,6 @@ export async function POST(req: Request) {
     }
 
     // save rating directly into GLPI
-    const now = new Date().toISOString().slice(0, 19).replace("T", " ");
 
     const updateRes = await fetch(`${GLPI_REST_URL}/TicketSatisfaction`, {
       method: "PUT",
@@ -160,9 +159,9 @@ export async function POST(req: Request) {
         input: [
           {
             id: satisfaction.id,
+            tickets_id: Number(normalizedTicketId),
             satisfaction: rating,
             comment: comment || "",
-            date_answered: now,
           },
         ],
       }),
@@ -207,8 +206,7 @@ export async function POST(req: Request) {
 
     if (
       !updatedSatisfaction ||
-      updatedSatisfaction.satisfaction === null ||
-      updatedSatisfaction.date_answered === null
+      updatedSatisfaction.satisfaction === null
     ) {
       return NextResponse.json(
         { ok: false, error: "GLPI did not save the rating" },
