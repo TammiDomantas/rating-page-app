@@ -23,7 +23,7 @@ async function initGlpiSession() {
     method: "GET",
     headers: {
       "App-Token": GLPI_APP_TOKEN,
-      Authorization: `user_token ${GLPI_USER_TOKEN}`,
+      Authorization: `Bearer ${GLPI_USER_TOKEN}`,
     },
   });
 
