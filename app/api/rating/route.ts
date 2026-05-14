@@ -1,64 +1,9 @@
 import { NextResponse } from "next/server";
 
-const GLPI_REST_URL = process.env.GLPI_REST_URL!;
-const GLPI_APP_TOKEN = process.env.GLPI_APP_TOKEN!;
-const GLPI_USER_TOKEN = process.env.GLPI_USER_TOKEN!;
-
-type TicketSatisfaction = {
-  id: number;
-  tickets_id: number;
-  date_answered: string | null;
-  satisfaction: number | null;
-  comment: string | null;
-};
-
-// helper
-async function readJsonResponse(res: Response, label: string) {
-  const text = await res.text();
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    console.error(`${label} returned non-JSON:`, text.slice(0, 500));
-    throw new Error(`${label} returned non-JSON`);
-  }
-}
-
-
-// create GLPI API session
-async function initGlpiSession() {
-  const res = await fetch(`${GLPI_REST_URL}/initSession`, {
-    method: "GET",
-    headers: {
-      "App-Token": GLPI_APP_TOKEN,
-      Authorization: `user_token ${GLPI_USER_TOKEN}`,
-    },
-  });
-
-  const data = await readJsonResponse(res, "GLPI initSession");
-
-  if (!res.ok) {
-    console.error("GLPI initSession error:", data);
-    throw new Error("Failed to initialize GLPI session");
-  }
-
-  return data.session_token as string;
-}
-
-// close GLPI API session
-async function killGlpiSession(sessionToken: string) {
-  await fetch(`${GLPI_REST_URL}/killSession`, {
-    method: "GET",
-    headers: {
-      "App-Token": GLPI_APP_TOKEN,
-      "Session-Token": sessionToken,
-    },
-  });
-}
+const GLPI_RATING_ENDPOINT = process.env.GLPI_RATING_ENDPOINT!;
+const GLPI_RATING_SECRET = process.env.GLPI_RATING_SECRET!;
 
 export async function POST(req: Request) {
-  let sessionToken: string | null = null;
-
   try {
     const body = await req.json();
 
@@ -86,7 +31,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // must have atleast 1 star
+    // must have at least 1 star
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return NextResponse.json(
         { ok: false, error: "Rating must be an integer between 1 and 5" },
@@ -94,127 +39,33 @@ export async function POST(req: Request) {
       );
     }
 
-    sessionToken = await initGlpiSession();
-
-    // get all GLPI satisfaction records
-    const satisfactionRes = await fetch(`${GLPI_REST_URL}/TicketSatisfaction`, {
-      method: "GET",
-      headers: {
-        "App-Token": GLPI_APP_TOKEN,
-        "Session-Token": sessionToken,
-      },
-    });
-
-    const satisfactionData = await readJsonResponse(
-      satisfactionRes,
-      "GLPI TicketSatisfaction fetch"
-    );
-
-    if (!satisfactionRes.ok) {
-      console.error("GLPI TicketSatisfaction fetch error:", satisfactionData);
-
-      return NextResponse.json(
-        { ok: false, error: "Failed to load GLPI satisfaction data" },
-        { status: 500 }
-      );
-    }
-
-    // find satisfaction record for this ticket
-    const satisfaction = (satisfactionData as TicketSatisfaction[]).find(
-      (item) => String(item.tickets_id) === normalizedTicketId
-    );
-
-    // ticket either not solved yet or no survey generated
-    if (!satisfaction) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "This ticket cannot be rated yet",
-        },
-        { status: 404 }
-      );
-    }
-
-    // prevent duplicate ratings
-    if (satisfaction.date_answered || satisfaction.satisfaction !== null) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: "This ticket was already rated",
-        },
-        { status: 409 }
-      );
-    }
-
-    // save rating directly into GLPI
-
-    const updateRes = await fetch(`${GLPI_REST_URL}/TicketSatisfaction`, {
-      method: "PUT",
+    // send rating to custom PHP endpoint on GLPI server
+    const glpiRes = await fetch(GLPI_RATING_ENDPOINT, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "App-Token": GLPI_APP_TOKEN,
-        "Session-Token": sessionToken,
+        "X-Rating-Secret": GLPI_RATING_SECRET,
       },
       body: JSON.stringify({
-        input: [
-          {
-            id: satisfaction.id,
-            tickets_id: Number(normalizedTicketId),
-            satisfaction: rating,
-            comment: comment || "",
-          },
-        ],
+        ticketId: normalizedTicketId,
+        rating,
+        comment,
       }),
     });
 
-    const updateData = await readJsonResponse(
-      updateRes,
-      "GLPI TicketSatisfaction update"
-    );
-    console.log("GLPI satisfaction update response:", updateData);
+    const glpiData = await glpiRes.json();
 
-    // verify data
-
-    const verifyRes = await fetch(`${GLPI_REST_URL}/TicketSatisfaction`, {
-      method: "GET",
-      headers: {
-        "App-Token": GLPI_APP_TOKEN,
-        "Session-Token": sessionToken,
-      },
-    });
-
-    const verifyData = await readJsonResponse(
-      verifyRes,
-      "GLPI TicketSatisfaction verify"
-    );
-
-    const updatedSatisfaction = (verifyData as TicketSatisfaction[]).find(
-      (item) => String(item.tickets_id) === normalizedTicketId
-    );
-
-    console.log("GLPI satisfaction verify response:", updatedSatisfaction);
-
-
-    if (!updateRes.ok || Array.isArray(updateData) && updateData[0] === "ERROR_GLPI_UPDATE") {
-      console.error("GLPI satisfaction update error:", updateData);
+    if (!glpiRes.ok || !glpiData.ok) {
+      console.error("Custom GLPI rating endpoint error:", glpiData);
 
       return NextResponse.json(
-        { ok: false, error: "Failed to save rating to GLPI" },
-        { status: 500 }
+        {
+          ok: false,
+          error: glpiData.error || "Failed to save rating to GLPI",
+        },
+        { status: glpiRes.status || 500 }
       );
     }
-
-    if (
-      !updatedSatisfaction ||
-      updatedSatisfaction.satisfaction === null
-    ) {
-      return NextResponse.json(
-        { ok: false, error: "GLPI did not save the rating" },
-        { status: 500 }
-      );
-    }
-
-
 
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -224,10 +75,5 @@ export async function POST(req: Request) {
       { ok: false, error: "Invalid request" },
       { status: 400 }
     );
-  } finally {
-    // always close GLPI session
-    if (sessionToken) {
-      await killGlpiSession(sessionToken);
-    }
   }
 }
