@@ -241,12 +241,12 @@ export default function CreateTicketPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedFiles([]);
+                setSelectedFiles([]);
 
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }}
                 className="mt-3 text-sm text-red-600 hover:text-red-700"
               >
                 Išvalyti pasirinktus failus

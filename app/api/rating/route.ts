@@ -67,6 +67,12 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log("Rating successfully saved to GLPI:", {
+      ticketId: normalizedTicketId,
+      rating,
+      comment,
+    });
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("Rating API error:", err);
