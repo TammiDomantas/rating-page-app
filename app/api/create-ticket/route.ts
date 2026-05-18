@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { departmentMap, categoryMap } from "@/lib/glpiMappings";
 import { supabase } from "@/lib/supabase";
+import { useRef, useState } from "react";
 
 const GLPI_URL = process.env.GLPI_URL!;
 const GLPI_API_BASE = process.env.GLPI_API_BASE!;

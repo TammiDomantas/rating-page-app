@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRef, useState } from "react";
 
 export default function CreateTicketPage() {
 
   const [loading, setLoading] = useState(false); 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -15,6 +16,12 @@ export default function CreateTicketPage() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
+
+    formData.delete("attachments");
+
+    for (const file of selectedFiles) {
+      formData.append("attachments", file);
+    }
 
     const res = await fetch("/api/create-ticket", {
       method: "POST",
@@ -31,8 +38,12 @@ export default function CreateTicketPage() {
     }
 
     setSelectedFiles([]);
-    e.currentTarget.reset();
-    router.push("/ticket-made"); 
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    router.replace("/ticket-made");
   }
 
   return (
@@ -201,6 +212,7 @@ export default function CreateTicketPage() {
             </div>
 
             <input
+              ref={fileInputRef}
               name="attachments"
               type="file"
               multiple
@@ -228,7 +240,13 @@ export default function CreateTicketPage() {
 
               <button
                 type="button"
-                onClick={() => setSelectedFiles([])}
+                onClick={() => {
+                  setSelectedFiles([]);
+
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
+                }}
                 className="mt-3 text-sm text-red-600 hover:text-red-700"
               >
                 Išvalyti pasirinktus failus
