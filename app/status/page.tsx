@@ -165,7 +165,7 @@ export default function StatusPage() {
                     }}
                     className="border border-[#cfd7e3] px-3 py-2 text-sm hover:bg-gray-100"
                   >
-                    {sortDirection === "asc" ? "Didėjančiai" : "Mažėjančiai"}
+                    {sortDirection === "asc" ? "ASC" : "DESC"}
                   </button>
                 </div>
 
