@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
 
 const GLPI_URL = process.env.GLPI_URL!;
 const GLPI_API_BASE = process.env.GLPI_API_BASE!;
@@ -8,10 +7,36 @@ const GLPI_CLIENT_SECRET = process.env.GLPI_CLIENT_SECRET!;
 const GLPI_USERNAME = process.env.GLPI_USERNAME!;
 const GLPI_PASSWORD = process.env.GLPI_PASSWORD!;
 
+type GlpiTicket = {
+  id: number | string;
+  name?: string;
+  status?: unknown;
+  date_creation?: string;
+  date?: string;
+  created_at?: string;
+  content?: string;
+};
+
+function getStatusLabel(status: unknown) {
+  if (typeof status === "string") return status;
+  if (typeof status === "number") return String(status);
+
+  if (status && typeof status === "object") {
+    const s = status as {
+      name?: string;
+      label?: string;
+      value?: string | number;
+    };
+
+    return String(s.name ?? s.label ?? s.value ?? "");
+  }
+
+  return "";
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
     const email = String(body.email || "").trim().toLowerCase();
 
     if (!email) {
@@ -21,33 +46,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // get tickets from supabase
-    const { data, error } = await supabase
-      .from("submitted_tickets")
-      .select("glpi_ticket_id, title, status, created_at")
-      .eq("email", email)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Supabase load tickets error:", error);
-
-      return NextResponse.json(
-        { ok: false, error: "Failed to load tickets" },
-        { status: 500 }
-      );
-    }
-
-    const tickets = data ?? [];
-
-    // if no tickets, return immediately
-    if (tickets.length === 0) {
-      return NextResponse.json({
-        ok: true,
-        tickets: [],
-      });
-    }
-
-    // authenticate with GLPI
+    // authenticate with GLPI high-level API
     const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
       method: "POST",
       headers: {
@@ -76,64 +75,43 @@ export async function POST(req: Request) {
 
     const accessToken = tokenData.access_token;
 
-    // refresh ticket statuses from GLPI
-    const updatedTickets = await Promise.all(
-      tickets.map(async (ticket) => {
-        try {
-          const ticketRes = await fetch(
-            `${GLPI_URL}/Assistance/Ticket/${ticket.glpi_ticket_id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
-
-          const glpiTicket = await ticketRes.json();
-
-          if (!ticketRes.ok) {
-            console.error(
-              `GLPI ticket fetch error for ${ticket.glpi_ticket_id}:`,
-              glpiTicket
-            );
-
-            return ticket;
-          }
-
-          const latestStatus =
-            glpiTicket.status?.name ??
-            glpiTicket.status?.label ??
-            glpiTicket.status?.value ??
-            ticket.status;
-
-          console.log("GLPI ticket status:", glpiTicket.status);
-          
-          // update supabase
-          await supabase
-            .from("submitted_tickets")
-            .update({
-              status: latestStatus,
-            })
-            .eq("glpi_ticket_id", ticket.glpi_ticket_id);
-
-          return {
-            ...ticket,
-            status: latestStatus,
-          };
-        } catch (err) {
-          console.error(
-            `Ticket refresh error for ${ticket.glpi_ticket_id}:`,
-            err
-          );
-
-          return ticket;
-        }
-      })
+    // Search tickets directly in GLPI via email
+    const ticketRes = await fetch(
+      `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(email)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
     );
+
+    const ticketData = await ticketRes.json();
+
+    if (!ticketRes.ok) {
+      console.error("GLPI ticket search error:", ticketData);
+
+      return NextResponse.json(
+        { ok: false, error: "Failed to load tickets from GLPI" },
+        { status: 500 }
+      );
+    }
+
+    const tickets = Array.isArray(ticketData)
+      ? ticketData.map((ticket: GlpiTicket) => ({
+          glpi_ticket_id: String(ticket.id),
+          title: ticket.name ?? `Užklausa #${ticket.id}`,
+          status: getStatusLabel(ticket.status),
+          created_at:
+            ticket.date_creation ??
+            ticket.created_at ??
+            ticket.date ??
+            new Date().toISOString(),
+        }))
+      : [];
 
     return NextResponse.json({
       ok: true,
-      tickets: updatedTickets,
+      tickets,
     });
   } catch (err) {
     console.error("my-tickets API error:", err);
