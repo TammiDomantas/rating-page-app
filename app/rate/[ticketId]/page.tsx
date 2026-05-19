@@ -114,6 +114,31 @@ export default function RatingPage() {
     );
   }
 
+  // if ticket was already rated
+  if (context?.alreadyRated) {
+    return (
+      <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
+        <div className="bg-[#1f5fa8] px-10 py-4 text-lg font-bold text-white">
+          Respublikinės Šiaulių Ligoninės Pagalba
+        </div>
+
+        <div className="mx-auto mt-16 max-w-xl border border-[#d9e1ec] bg-white text-center">
+          <div className="border-b border-[#e1e7f0] px-8 py-6">
+            <h1 className="text-2xl font-bold text-[#1f5fa8]">
+              Įvertinimas jau pateiktas
+            </h1>
+          </div>
+
+          <div className="px-8 py-8">
+            <p className="text-sm text-gray-600">
+              Ši užklausa jau įvertinta.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
 
   // if failed to load or rating not allowed
   if (contextError || !context || !context.ratingAllowed) {
@@ -133,31 +158,6 @@ export default function RatingPage() {
           <div className="px-8 py-8">
             <p className="text-sm text-gray-600">
               {contextError || "Šios užklausos įvertinti negalima."}
-            </p>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // if ticket was already rated
-  if (context.alreadyRated) {
-    return (
-      <main className="min-h-screen bg-[#f2f5f9] text-gray-800">
-        <div className="bg-[#1f5fa8] px-10 py-4 text-lg font-bold text-white">
-          Respublikinės Šiaulių Ligoninės Pagalba
-        </div>
-
-        <div className="mx-auto mt-16 max-w-xl border border-[#d9e1ec] bg-white text-center">
-          <div className="border-b border-[#e1e7f0] px-8 py-6">
-            <h1 className="text-2xl font-bold text-[#1f5fa8]">
-              Įvertinimas jau pateiktas
-            </h1>
-          </div>
-
-          <div className="px-8 py-8">
-            <p className="text-sm text-gray-600">
-              Ši užklausa jau įvertinta.
             </p>
           </div>
         </div>
