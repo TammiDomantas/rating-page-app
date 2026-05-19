@@ -96,7 +96,10 @@ export async function POST(req: Request) {
       );
     }
 
+
     const rawTickets = Array.isArray(ticketData) ? ticketData : [];
+
+    
 
     const filteredTickets = rawTickets.filter((ticket: GlpiTicket) => {
       const content = String(ticket.content ?? "").toLowerCase();
@@ -116,6 +119,9 @@ export async function POST(req: Request) {
         new Date().toISOString(),
     }));
 
+    console.log("GLPI ticket search count:", Array.isArray(ticketData) ? ticketData.length : "not array");
+    console.log("Filtered ticket count:", tickets.length);
+    
     return NextResponse.json({
       ok: true,
       tickets,
