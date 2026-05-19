@@ -96,18 +96,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const tickets = Array.isArray(ticketData)
-      ? ticketData.map((ticket: GlpiTicket) => ({
-          glpi_ticket_id: String(ticket.id),
-          title: ticket.name ?? `Užklausa #${ticket.id}`,
-          status: getStatusLabel(ticket.status),
-          created_at:
-            ticket.date_creation ??
-            ticket.created_at ??
-            ticket.date ??
-            new Date().toISOString(),
-        }))
-      : [];
+    const rawTickets = Array.isArray(ticketData) ? ticketData : [];
+
+    const filteredTickets = rawTickets.filter((ticket: GlpiTicket) => {
+      const content = String(ticket.content ?? "").toLowerCase();
+      const title = String(ticket.name ?? "").toLowerCase();
+
+      return content.includes(email) || title.includes(email);
+    });
+
+    const tickets = filteredTickets.map((ticket: GlpiTicket) => ({
+      glpi_ticket_id: String(ticket.id),
+      title: ticket.name ?? `Užklausa #${ticket.id}`,
+      status: getStatusLabel(ticket.status),
+      created_at:
+        ticket.date_creation ??
+        ticket.created_at ??
+        ticket.date ??
+        new Date().toISOString(),
+    }));
 
     return NextResponse.json({
       ok: true,
