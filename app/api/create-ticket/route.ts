@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { departmentMap, categoryMap } from "@/lib/glpiMappings";
-import { supabase } from "@/lib/supabase";
 
 
 const GLPI_URL = process.env.GLPI_URL!;
@@ -295,15 +294,6 @@ export async function POST(req: Request) {
         console.error("GLPI requester attach error:", requesterText);
       }
     }
-
-    // store ticket in supabase
-    await supabase.from("submitted_tickets").insert({
-      email,
-      requester_name: name,
-      title,
-      glpi_ticket_id: String(ticketData.id),
-      status: "created",
-    });
 
     return NextResponse.json({
       ok: true,
