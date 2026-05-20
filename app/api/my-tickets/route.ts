@@ -7,6 +7,13 @@ const GLPI_CLIENT_SECRET = process.env.GLPI_CLIENT_SECRET!;
 const GLPI_USERNAME = process.env.GLPI_USERNAME!;
 const GLPI_PASSWORD = process.env.GLPI_PASSWORD!;
 
+type GlpiTeamMember = {
+  role?: string;
+  id?: number | string;
+  name?: string;
+  display_name?: string;
+};
+
 type GlpiTicket = {
   id: number | string;
   name?: string;
@@ -15,6 +22,7 @@ type GlpiTicket = {
   date?: string;
   created_at?: string;
   content?: string;
+  team?: GlpiTeamMember[];
 };
 
 type GlpiUser = {
@@ -25,6 +33,7 @@ type GlpiUser = {
   }[];
 };
 
+// Convert different GLPI status shapes into readable text
 function getStatusLabel(status: unknown) {
   if (typeof status === "string") return status;
   if (typeof status === "number") return String(status);
@@ -42,6 +51,7 @@ function getStatusLabel(status: unknown) {
   return "";
 }
 
+// Authenticate with GLPI API
 async function getAccessToken() {
   const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
     method: "POST",
@@ -68,6 +78,7 @@ async function getAccessToken() {
   return tokenData.access_token as string;
 }
 
+// Find GLPI user by submitted email
 async function findUserByEmail(accessToken: string, email: string) {
   const userRes = await fetch(
     `${GLPI_URL}/Administration/User?searchText=${encodeURIComponent(email)}`,
@@ -85,6 +96,7 @@ async function findUserByEmail(accessToken: string, email: string) {
     return null;
   }
 
+  // GLPI user can have multiple emails so check all email entries
   const matchedUser = userData.find((user: GlpiUser) =>
     Array.isArray(user.emails) &&
     user.emails.some(
@@ -109,7 +121,7 @@ export async function POST(req: Request) {
 
     const accessToken = await getAccessToken();
 
-    // First find the GLPI user by email
+    // find the GLPI user matching the entered email
     const matchedUser = await findUserByEmail(accessToken, email);
 
     if (!matchedUser?.id) {
@@ -125,8 +137,8 @@ export async function POST(req: Request) {
       email,
     });
 
-    // Search tickets using the GLPI user id.
-    // This is much faster than scanning all tickets by email.
+    // search tickets using matched user id.
+    // GLPI returns tickets with a team array containing requester/assigned users.
     const ticketRes = await fetch(
       `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(
         String(matchedUser.id)
@@ -149,31 +161,30 @@ export async function POST(req: Request) {
       );
     }
 
-    const rawTickets = Array.isArray(ticketData) ? ticketData : [];
+    const rawTickets: GlpiTicket[] = Array.isArray(ticketData)
+      ? ticketData
+      : [];
 
     console.log("GLPI raw ticket count:", rawTickets.length);
 
-    // Temporary broad filter because GLPI HL ticket shape can vary.
-    // After checking logs, this can be made more exact.
-    const filteredTickets = rawTickets.filter((ticket: GlpiTicket) => {
-      const ticketText = JSON.stringify(ticket).toLowerCase();
-      const userId = String(matchedUser.id).toLowerCase();
+    // keep only tickets where this user is the requester.
+    const filteredTickets = rawTickets.filter((ticket) => {
+      const team = ticket.team;
 
       return (
-        ticketText.includes(email) ||
-        ticketText.includes(userId)
+        Array.isArray(team) &&
+        team.some(
+          (member) =>
+            member.role === "requester" &&
+            String(member.id) === String(matchedUser.id)
+        )
       );
     });
 
-    console.log("Filtered ticket count:", filteredTickets.length);
-    console.log(
-      "Sample ticket:",
-      filteredTickets[0]
-        ? JSON.stringify(filteredTickets[0], null, 2)
-        : "none"
-    );
+    console.log("Filtered requester ticket count:", filteredTickets.length);
 
-    const tickets = filteredTickets.map((ticket: GlpiTicket) => ({
+    // return data
+    const tickets = filteredTickets.map((ticket) => ({
       glpi_ticket_id: String(ticket.id),
       title: ticket.name ?? `Užklausa #${ticket.id}`,
       status: getStatusLabel(ticket.status),
