@@ -17,6 +17,14 @@ type GlpiTicket = {
   content?: string;
 };
 
+type GlpiUser = {
+  id?: number | string;
+  name?: string;
+  emails?: {
+    email?: string;
+  }[];
+};
+
 function getStatusLabel(status: unknown) {
   if (typeof status === "string") return status;
   if (typeof status === "number") return String(status);
@@ -33,47 +41,58 @@ function getStatusLabel(status: unknown) {
 
   return "";
 }
-// paginate ticket search
-async function fetchAllTickets(accessToken: string, email: string) {
-  const pageSize = 100;
-  let start = 0;
-  let allTickets: GlpiTicket[] = [];
 
-  while (true) {
-    const end = start + pageSize - 1;
+async function getAccessToken() {
+  const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      grant_type: "password",
+      client_id: GLPI_CLIENT_ID,
+      client_secret: GLPI_CLIENT_SECRET,
+      username: GLPI_USERNAME,
+      password: GLPI_PASSWORD,
+      scope: "api",
+    }),
+  });
 
-    const res = await fetch(
-      `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(
-        email
-      )}&range=${start}-${end}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+  const tokenData = await tokenRes.json();
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("GLPI ticket search error:", data);
-      throw new Error("Failed to load tickets from GLPI");
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      break;
-    }
-
-    allTickets = [...allTickets, ...data];
-
-    if (data.length < pageSize) {
-      break;
-    }
-
-    start += pageSize;
+  if (!tokenRes.ok) {
+    console.error("GLPI OAuth error:", tokenData);
+    throw new Error("GLPI authentication failed");
   }
 
-  return allTickets;
+  return tokenData.access_token as string;
+}
+
+async function findUserByEmail(accessToken: string, email: string) {
+  const userRes = await fetch(
+    `${GLPI_URL}/Administration/User?searchText=${encodeURIComponent(email)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
+
+  const userData = await userRes.json();
+
+  if (!userRes.ok || !Array.isArray(userData)) {
+    console.error("GLPI user search error:", userData);
+    return null;
+  }
+
+  const matchedUser = userData.find((user: GlpiUser) =>
+    Array.isArray(user.emails) &&
+    user.emails.some(
+      (entry) => entry.email?.toLowerCase() === email.toLowerCase()
+    )
+  );
+
+  return matchedUser ?? null;
 }
 
 export async function POST(req: Request) {
@@ -88,48 +107,71 @@ export async function POST(req: Request) {
       );
     }
 
-    // authenticate with GLPI high-level API
-    const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        grant_type: "password",
-        client_id: GLPI_CLIENT_ID,
-        client_secret: GLPI_CLIENT_SECRET,
-        username: GLPI_USERNAME,
-        password: GLPI_PASSWORD,
-        scope: "api",
-      }),
+    const accessToken = await getAccessToken();
+
+    // First find the GLPI user by email
+    const matchedUser = await findUserByEmail(accessToken, email);
+
+    if (!matchedUser?.id) {
+      return NextResponse.json({
+        ok: true,
+        tickets: [],
+      });
+    }
+
+    console.log("Matched GLPI user:", {
+      id: matchedUser.id,
+      name: matchedUser.name,
+      email,
     });
 
-    const tokenData = await tokenRes.json();
+    // Search tickets using the GLPI user id.
+    // This is much faster than scanning all tickets by email.
+    const ticketRes = await fetch(
+      `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(
+        String(matchedUser.id)
+      )}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
-    if (!tokenRes.ok) {
-      console.error("GLPI OAuth error:", tokenData);
+    const ticketData = await ticketRes.json();
+
+    if (!ticketRes.ok) {
+      console.error("GLPI ticket search error:", ticketData);
 
       return NextResponse.json(
-        { ok: false, error: "GLPI authentication failed" },
+        { ok: false, error: "Failed to load tickets from GLPI" },
         { status: 500 }
       );
     }
 
-    const accessToken = tokenData.access_token;
+    const rawTickets = Array.isArray(ticketData) ? ticketData : [];
 
-    // Search tickets directly in GLPI via email
-    const rawTickets = await fetchAllTickets(accessToken, email);
+    console.log("GLPI raw ticket count:", rawTickets.length);
 
-    console.log("GLPI total ticket search count:", rawTickets.length);
-
-    
-
+    // Temporary broad filter because GLPI HL ticket shape can vary.
+    // After checking logs, this can be made more exact.
     const filteredTickets = rawTickets.filter((ticket: GlpiTicket) => {
-      const content = String(ticket.content ?? "").toLowerCase();
-      const title = String(ticket.name ?? "").toLowerCase();
+      const ticketText = JSON.stringify(ticket).toLowerCase();
+      const userId = String(matchedUser.id).toLowerCase();
 
-      return content.includes(email) || title.includes(email);
+      return (
+        ticketText.includes(email) ||
+        ticketText.includes(userId)
+      );
     });
+
+    console.log("Filtered ticket count:", filteredTickets.length);
+    console.log(
+      "Sample ticket:",
+      filteredTickets[0]
+        ? JSON.stringify(filteredTickets[0], null, 2)
+        : "none"
+    );
 
     const tickets = filteredTickets.map((ticket: GlpiTicket) => ({
       glpi_ticket_id: String(ticket.id),
@@ -142,9 +184,6 @@ export async function POST(req: Request) {
         new Date().toISOString(),
     }));
 
-    console.log("GLPI ticket search count:", rawTickets.length);
-    console.log("Filtered ticket count:", tickets.length);
-    
     return NextResponse.json({
       ok: true,
       tickets,
