@@ -142,7 +142,7 @@ export async function POST(req: Request) {
     const ticketRes = await fetch(
       `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(
         String(matchedUser.id)
-      )}`,
+      )}&range=0-999`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
