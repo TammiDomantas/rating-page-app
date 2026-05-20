@@ -229,7 +229,7 @@ export default function StatusPage() {
                         <td className="px-4 py-3">{ticket.title}</td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-block rounded px-2 py-1 text-xs font-medium ${getStatusClass(
+                            className={`inline-flex w-[100px] justify-center rounded px-2 py-1 text-xs font-medium ${getStatusClass(
                               ticket.status
                             )}`}
                           >
