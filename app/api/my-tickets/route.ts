@@ -7,23 +7,9 @@ const GLPI_CLIENT_SECRET = process.env.GLPI_CLIENT_SECRET!;
 const GLPI_USERNAME = process.env.GLPI_USERNAME!;
 const GLPI_PASSWORD = process.env.GLPI_PASSWORD!;
 
-type GlpiTeamMember = {
-  role?: string;
-  id?: number | string;
-  name?: string;
-  display_name?: string;
-};
-
-type GlpiTicket = {
-  id: number | string;
-  name?: string;
-  status?: unknown;
-  date_creation?: string;
-  date?: string;
-  created_at?: string;
-  content?: string;
-  team?: GlpiTeamMember[];
-};
+const GLPI_REST_URL = process.env.GLPI_REST_URL!;
+const GLPI_APP_TOKEN = process.env.GLPI_APP_TOKEN!;
+const GLPI_USER_TOKEN = process.env.GLPI_USER_TOKEN!;
 
 type GlpiUser = {
   id?: number | string;
@@ -31,6 +17,13 @@ type GlpiUser = {
   emails?: {
     email?: string;
   }[];
+};
+
+type LegacyTicketRow = {
+  id?: unknown;
+  name?: unknown;
+  status?: unknown;
+  date_creation?: unknown;
 };
 
 // Convert different GLPI status shapes into readable text
@@ -51,7 +44,7 @@ function getStatusLabel(status: unknown) {
   return "";
 }
 
-// Authenticate with GLPI API
+// Authenticate with GLPI High-Level API
 async function getAccessToken() {
   const tokenRes = await fetch(`${GLPI_API_BASE}/token`, {
     method: "POST",
@@ -107,9 +100,44 @@ async function findUserByEmail(accessToken: string, email: string) {
   return matchedUser ?? null;
 }
 
+// Start GLPI legacy REST API session
+async function initLegacySession() {
+  const sessionRes = await fetch(`${GLPI_REST_URL}/initSession`, {
+    method: "GET",
+    headers: {
+      "App-Token": GLPI_APP_TOKEN,
+      Authorization: `user_token ${GLPI_USER_TOKEN}`,
+    },
+  });
+
+  const sessionData = await sessionRes.json();
+
+  if (!sessionRes.ok || !sessionData.session_token) {
+    console.error("GLPI legacy initSession error:", sessionData);
+    throw new Error("Failed to initialize GLPI legacy session");
+  }
+
+  return sessionData.session_token as string;
+}
+
+// Close GLPI legacy REST API session
+async function killLegacySession(sessionToken: string) {
+  await fetch(`${GLPI_REST_URL}/killSession`, {
+    method: "GET",
+    headers: {
+      "App-Token": GLPI_APP_TOKEN,
+      "Session-Token": sessionToken,
+    },
+  });
+}
+
 export async function POST(req: Request) {
+  let sessionToken: string | null = null;
+
   try {
     const body = await req.json();
+
+    // normalize submitted email
     const email = String(body.email || "").trim().toLowerCase();
 
     if (!email) {
@@ -119,11 +147,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // authenticate with GLPI High-Level API
     const accessToken = await getAccessToken();
 
     // find the GLPI user matching the entered email
     const matchedUser = await findUserByEmail(accessToken, email);
 
+    // if no GLPI user has this email, there are no tickets to show
     if (!matchedUser?.id) {
       return NextResponse.json({
         ok: true,
@@ -137,15 +167,21 @@ export async function POST(req: Request) {
       email,
     });
 
-    // search tickets using matched user id.
-    // GLPI returns tickets with a team array containing requester/assigned users.
+    // authenticate with GLPI legacy REST API
+    sessionToken = await initLegacySession();
+
+    // search tickets where requester = matched GLPI user
+    // field 4 = Requester, found from /listSearchOptions/Ticket
     const ticketRes = await fetch(
-      `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(
-        String(matchedUser.id)
-      )}&range=0-999`,
+      `${GLPI_REST_URL}/search/Ticket` +
+        `?criteria[0][field]=4` +
+        `&criteria[0][searchtype]=equals` +
+        `&criteria[0][value]=${encodeURIComponent(String(matchedUser.id))}` +
+        `&range=0-999`,
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          "App-Token": GLPI_APP_TOKEN,
+          "Session-Token": sessionToken,
         },
       }
     );
@@ -153,7 +189,7 @@ export async function POST(req: Request) {
     const ticketData = await ticketRes.json();
 
     if (!ticketRes.ok) {
-      console.error("GLPI ticket search error:", ticketData);
+      console.error("GLPI legacy ticket search error:", ticketData);
 
       return NextResponse.json(
         { ok: false, error: "Failed to load tickets from GLPI" },
@@ -161,38 +197,27 @@ export async function POST(req: Request) {
       );
     }
 
-    const rawTickets: GlpiTicket[] = Array.isArray(ticketData)
-      ? ticketData
-      : [];
-
-    console.log("GLPI raw ticket count:", rawTickets.length);
-
-    // keep only tickets where this user is the requester.
-    const filteredTickets = rawTickets.filter((ticket) => {
-      const team = ticket.team;
-
-      return (
-        Array.isArray(team) &&
-        team.some(
-          (member) =>
-            member.role === "requester" &&
-            String(member.id) === String(matchedUser.id)
-        )
-      );
+    console.log("GLPI requester ticket search result:", {
+      totalcount: ticketData.totalcount,
+      count: Array.isArray(ticketData.data) ? ticketData.data.length : 0,
     });
 
-    console.log("Filtered requester ticket count:", filteredTickets.length);
+    // legacy search returns rows using search-option field numbers
+    const legacyTickets: LegacyTicketRow[] = Array.isArray(ticketData.data)
+      ? ticketData.data.map((row: Record<string, unknown>) => ({
+          id: row["2"], // Ticket ID
+          name: row["1"], // Ticket title
+          status: row["12"], // Ticket status
+          date_creation: row["15"], // Ticket created/opening date
+        }))
+      : [];
 
-    // return data
-    const tickets = filteredTickets.map((ticket) => ({
+    // return data in the same shape the frontend already expects
+    const tickets = legacyTickets.map((ticket) => ({
       glpi_ticket_id: String(ticket.id),
-      title: ticket.name ?? `Užklausa #${ticket.id}`,
+      title: String(ticket.name ?? `Užklausa #${ticket.id}`),
       status: getStatusLabel(ticket.status),
-      created_at:
-        ticket.date_creation ??
-        ticket.created_at ??
-        ticket.date ??
-        new Date().toISOString(),
+      created_at: String(ticket.date_creation ?? new Date().toISOString()),
     }));
 
     return NextResponse.json({
@@ -206,5 +231,10 @@ export async function POST(req: Request) {
       { ok: false, error: "Server error" },
       { status: 500 }
     );
+  } finally {
+    // always close legacy session if it was opened
+    if (sessionToken) {
+      await killLegacySession(sessionToken);
+    }
   }
 }
