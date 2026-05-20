@@ -33,6 +33,48 @@ function getStatusLabel(status: unknown) {
 
   return "";
 }
+// paginate ticket search
+async function fetchAllTickets(accessToken: string, email: string) {
+  const pageSize = 100;
+  let start = 0;
+  let allTickets: GlpiTicket[] = [];
+
+  while (true) {
+    const end = start + pageSize - 1;
+
+    const res = await fetch(
+      `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(
+        email
+      )}&range=${start}-${end}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("GLPI ticket search error:", data);
+      throw new Error("Failed to load tickets from GLPI");
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      break;
+    }
+
+    allTickets = [...allTickets, ...data];
+
+    if (data.length < pageSize) {
+      break;
+    }
+
+    start += pageSize;
+  }
+
+  return allTickets;
+}
 
 export async function POST(req: Request) {
   try {
@@ -76,28 +118,9 @@ export async function POST(req: Request) {
     const accessToken = tokenData.access_token;
 
     // Search tickets directly in GLPI via email
-    const ticketRes = await fetch(
-      `${GLPI_URL}/Assistance/Ticket?searchText=${encodeURIComponent(email)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const rawTickets = await fetchAllTickets(accessToken, email);
 
-    const ticketData = await ticketRes.json();
-
-    if (!ticketRes.ok) {
-      console.error("GLPI ticket search error:", ticketData);
-
-      return NextResponse.json(
-        { ok: false, error: "Failed to load tickets from GLPI" },
-        { status: 500 }
-      );
-    }
-
-
-    const rawTickets = Array.isArray(ticketData) ? ticketData : [];
+    console.log("GLPI total ticket search count:", rawTickets.length);
 
     
 
@@ -119,7 +142,7 @@ export async function POST(req: Request) {
         new Date().toISOString(),
     }));
 
-    console.log("GLPI ticket search count:", Array.isArray(ticketData) ? ticketData.length : "not array");
+    console.log("GLPI ticket search count:", rawTickets.length);
     console.log("Filtered ticket count:", tickets.length);
     
     return NextResponse.json({
