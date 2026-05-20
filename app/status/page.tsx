@@ -10,6 +10,32 @@ type TicketRow = {
   created_at: string;
 };
 
+function getStatusClass(status: string) {
+  switch (status) {
+    case "Nauja":
+      return "bg-blue-100 text-blue-700";
+
+    case "Vykdoma":
+      return "bg-yellow-100 text-yellow-700";
+
+    case "Laukiama":
+      return "bg-orange-100 text-orange-700";
+
+    case "Suplanuota":
+      return "bg-purple-100 text-purple-700";
+
+    case "Išspręsta":
+      return "bg-green-100 text-green-700";
+
+    case "Uždaryta":
+      return "bg-gray-100 text-gray-700";
+
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
+
 export default function StatusPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -201,7 +227,15 @@ export default function StatusPage() {
                       >
                         <td className="px-4 py-3">{ticket.glpi_ticket_id}</td>
                         <td className="px-4 py-3">{ticket.title}</td>
-                        <td className="px-4 py-3">{ticket.status}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-block rounded px-2 py-1 text-xs font-medium ${getStatusClass(
+                              ticket.status
+                            )}`}
+                          >
+                            {ticket.status}
+                          </span>
+                        </td>
                         <td className="px-4 py-3">
                           {new Date(ticket.created_at).toLocaleString("lt-LT")}
                         </td>

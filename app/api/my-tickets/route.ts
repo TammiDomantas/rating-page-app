@@ -28,8 +28,22 @@ type LegacyTicketRow = {
 
 // Convert different GLPI status shapes into readable text
 function getStatusLabel(status: unknown) {
-  if (typeof status === "string") return status;
-  if (typeof status === "number") return String(status);
+  const map: Record<number, string> = {
+    1: "Nauja",
+    2: "Vykdoma",
+    3: "Laukiama",
+    4: "Suplanuota",
+    5: "Išspręsta",
+    6: "Uždaryta",
+  };
+
+  if (typeof status === "number") {
+    return map[status] ?? String(status);
+  }
+
+  if (typeof status === "string") {
+    return map[Number(status)] ?? status;
+  }
 
   if (status && typeof status === "object") {
     const s = status as {
@@ -38,7 +52,9 @@ function getStatusLabel(status: unknown) {
       value?: string | number;
     };
 
-    return String(s.name ?? s.label ?? s.value ?? "");
+    const value = s.name ?? s.label ?? s.value ?? "";
+
+    return map[Number(value)] ?? String(value);
   }
 
   return "";
